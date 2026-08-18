@@ -57,18 +57,55 @@ cp -r context-curation ~/.config/opencode/skill/
 cp context-curation/command/tune-docs.md ~/.config/opencode/command/
 
 # For a project-local installation:
-# cp -r context-curation <project>/.opencode/skill/
+# cp -r context-curation <project>/.opencode/skills/
 ```
 
 Keep `context-curation` global, but copy `session-context-init` and `session-handoff` into the
-project's `.opencode/skill/` directory. Add the contract hooks from `integration/` to those local
-copies. Run curation in pre-init mode after the initial project plan is clear and before running
-`session-context-init`; the first approved run creates `docs/handoff/handoff-spec.md` and
-`docs/handoff/.curation-state.json`.
+project's `.opencode/skills/` directory. Run curation in pre-init mode after the initial project
+plan is clear and before running `session-context-init`. It detects missing contract hooks at the
+two fixed local paths and proposes their installation; the first approved run installs them and
+creates `docs/handoff/handoff-spec.md` and `docs/handoff/.curation-state.json`.
 
 See [`context-curation/INSTALL.md`](context-curation/INSTALL.md) for the complete installation and
 integration guide (Korean), and [`context-curation/SKILL.md`](context-curation/SKILL.md) for the
 agent execution contract.
+
+## Usage
+
+### First project setup
+
+1. Form the initial project concept and a rough plan.
+2. Install the project-local `session-context-init` and `session-handoff` copies under
+   `.opencode/skills/`.
+3. Before running context init, invoke curation explicitly:
+
+   ```text
+   /tune-docs pre-init
+   ```
+
+   Or ask: `Use context-curation in pre-init mode to design this project's memory contract.`
+4. Review `docs/_tuning-proposal.md`. Missing or stale session hooks appear as blocking items.
+   Approve or reject items by ID; no persistent project file is changed before approval.
+5. After the approved items are applied, run `session-context-init`. It creates root `AGENTS.md`,
+   root `PLAN.md`, and the files declared under `docs/handoff/`.
+
+### Periodic tuning
+
+Run `/tune-docs`, or ask naturally:
+
+```text
+The agent keeps forgetting the same constraint. Tune the project docs.
+We closed a milestone. Run context-curation before the next session.
+```
+
+The skill audits and harvests evidence, writes `docs/_tuning-proposal.md`, and stops. Review the
+proposal item by item; only approved items are applied. Typical triggers are five or more sessions
+since the last tuning, a closed milestone, documentation drift, an oversized AGENTS.md, or repeated
+agent mistakes.
+
+For standalone audit commands, see [Audit script](#audit-script). For detailed installation,
+operating settings, and troubleshooting, see
+[`context-curation/INSTALL.md`](context-curation/INSTALL.md).
 
 ## Repository layout
 
@@ -78,6 +115,7 @@ context-curation/
 ├── INSTALL.md                     # Installation and integration guide (Korean)
 ├── command/tune-docs.md           # Slash command for explicit invocation
 ├── scripts/docs_inventory.py      # Structural audit; standard library only, no network
+├── scripts/session_skill_hooks.py # Check/install approved project-local session hooks
 ├── references/
 │   ├── promotion-test.md          # Four promotion criteria and examples
 │   ├── routing-table.md           # Destination selection and document formats
@@ -128,6 +166,9 @@ python context-curation/scripts/docs_inventory.py --root /path/to/project
 # Before session-context-init
 # python context-curation/scripts/docs_inventory.py --root /path/to/project --pre-init
 
+# Check fixed project-local session skill hooks (read-only by default)
+# python context-curation/scripts/session_skill_hooks.py --root /path/to/project
+
 # From a global installation
 # python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root /path/to/project
 ```
@@ -154,8 +195,9 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All eleven current regression tests pass, including the pre-init lifecycle, nested handoff paths,
-bootstrap scope, reachability, freshness, and curation-state discovery.
+All fifteen current regression tests pass, covering the pre-init lifecycle, nested handoff paths,
+bootstrap scope, reachability, freshness, curation-state discovery, plural project skill paths,
+approved hook insertion, and idempotence.
 
 ## License
 

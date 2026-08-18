@@ -52,16 +52,54 @@ cp -r context-curation ~/.config/opencode/skill/
 cp context-curation/command/tune-docs.md ~/.config/opencode/command/
 
 # 프로젝트 로컬 설치가 필요하면:
-# cp -r context-curation <project>/.opencode/skill/
+# cp -r context-curation <project>/.opencode/skills/
 ```
 
 `context-curation`은 전역으로 두되 `session-context-init`과 `session-handoff`는 프로젝트의
-`.opencode/skill/`로 복사합니다. `integration/`의 contract hook을 두 로컬 스킬에 추가하고,
-초기 계획이 선 뒤 `session-context-init`보다 먼저 curation pre-init mode를 실행합니다. 첫 승인
-실행이 `docs/handoff/handoff-spec.md`와 `docs/handoff/.curation-state.json`을 생성합니다.
+`.opencode/skills/`로 복사합니다. 초기 계획이 선 뒤 `session-context-init`보다 먼저 curation
+pre-init mode를 실행합니다. 스킬은 고정된 두 로컬 경로에서 contract hook 누락을 감지해 설치를
+제안하며, 첫 승인 실행이 hook과 `docs/handoff/handoff-spec.md`,
+`docs/handoff/.curation-state.json`을 적용합니다.
 
 전체 설치 및 연동 절차는 [`context-curation/INSTALL.md`](context-curation/INSTALL.md),
 실행 계약은 [`context-curation/SKILL.md`](context-curation/SKILL.md)를 참고하세요.
+
+## 사용법
+
+### 첫 프로젝트 설정
+
+1. 프로젝트 초기 구상과 대략적인 계획을 세웁니다.
+2. 프로젝트 로컬 `session-context-init`, `session-handoff` 사본을 `.opencode/skills/` 아래에
+   설치합니다.
+3. context init을 실행하기 전에 curation을 명시적으로 호출합니다.
+
+   ```text
+   /tune-docs pre-init
+   ```
+
+   또는 `context-curation을 pre-init mode로 실행해서 이 프로젝트의 메모리 계약을 설계해줘.`라고
+   요청합니다.
+4. `docs/_tuning-proposal.md`를 읽습니다. 누락되거나 오래된 session hook은 blocking 항목으로
+   나타납니다. 항목 ID별로 승인하거나 거부하며, 승인 전에는 지속 프로젝트 파일을 변경하지
+   않습니다.
+5. 승인 항목이 적용된 다음 `session-context-init`을 실행합니다. 루트 `AGENTS.md`, 루트
+   `PLAN.md`와 `docs/handoff/` 아래의 계약된 파일이 생성됩니다.
+
+### 주기적 튜닝
+
+`/tune-docs`를 실행하거나 자연어로 요청합니다.
+
+```text
+에이전트가 같은 제약을 계속 잊어. 프로젝트 문서를 튜닝해줘.
+마일스톤을 종료했어. 다음 세션 전에 context-curation을 실행해줘.
+```
+
+스킬은 감사와 증거 수확을 수행하고 `docs/_tuning-proposal.md`를 작성한 뒤 멈춥니다. 제안서를
+항목별로 검토하며 승인된 항목만 적용됩니다. 대표적인 실행 시점은 마지막 튜닝 이후 5세션 이상,
+마일스톤 종료, 문서 drift, 비대해진 AGENTS.md 또는 반복되는 에이전트 실수입니다.
+
+감사 명령만 필요하면 [감사 스크립트](#감사-스크립트)를, 상세 설치·운영 설정·문제 해결은
+[`context-curation/INSTALL.md`](context-curation/INSTALL.md)를 참고하세요.
 
 ## 구성
 
@@ -71,6 +109,7 @@ context-curation/
 ├── INSTALL.md                     # 설치 및 기존 스킬 연동
 ├── command/tune-docs.md           # 명시 호출용 슬래시 커맨드
 ├── scripts/docs_inventory.py      # 구조 감사 (표준 라이브러리만, 네트워크 없음)
+├── scripts/session_skill_hooks.py # 프로젝트 로컬 session hook 점검/승인 적용
 ├── references/
 │   ├── promotion-test.md          # 승격 4기준과 예시
 │   ├── routing-table.md           # 목적지 결정과 문서 포맷
@@ -118,6 +157,9 @@ python context-curation/scripts/docs_inventory.py --root /path/to/project
 # session-context-init 실행 전
 # python context-curation/scripts/docs_inventory.py --root /path/to/project --pre-init
 
+# 고정된 프로젝트 로컬 session skill hook 점검 (기본은 읽기 전용)
+# python context-curation/scripts/session_skill_hooks.py --root /path/to/project
+
 # 전역 설치본
 # python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root /path/to/project
 ```
@@ -142,8 +184,9 @@ README는 조건부 문서인 L2로 취급하며, 파일명이 README라는 이�
 python -m unittest discover -s tests -v
 ```
 
-현재 pre-init 생명주기, handoff 하위 경로, bootstrap 범위, 도달성, freshness와 curation state
-탐색을 포함한 회귀 테스트 11개가 통과합니다.
+현재 pre-init 생명주기, handoff 하위 경로, bootstrap 범위, 도달성, freshness, curation state
+탐색, 복수형 프로젝트 스킬 경로, 승인된 hook 삽입과 멱등성을 포함한 회귀 테스트 15개가
+통과합니다.
 
 ## 라이선스
 
