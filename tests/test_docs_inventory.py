@@ -27,6 +27,7 @@ def args(**overrides):
         "dup_threshold": 0.45,
         "context_window": 200000,
         "bootstrap_sessions": 5,
+        "pre_init": False,
     }
     values.update(overrides)
     return types.SimpleNamespace(**values)
@@ -43,9 +44,9 @@ class InventoryTests(unittest.TestCase):
     def test_only_contract_paths_are_l1_and_all_docs_need_reachability(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            write(root, "AGENTS.md", "[plan](plan.md)\n")
-            write(root, "plan.md", "# Plan\n")
-            write(root, "docs/handoff.md", "# Handoff\n")
+            write(root, "AGENTS.md", "[plan](PLAN.md)\n")
+            write(root, "PLAN.md", "# Plan\n")
+            write(root, "docs/handoff/handoff.md", "# Handoff\n")
             write(root, "README.md", "# How to run\n")
             write(root, "docs/subsystem/README.md", "# Subsystem\n")
 
@@ -53,11 +54,11 @@ class InventoryTests(unittest.TestCase):
             layers = {record["path"]: record["layer"] for record in result["docs"]}
 
             self.assertEqual("L0", layers["AGENTS.md"])
-            self.assertEqual("L1", layers["plan.md"])
-            self.assertEqual("L1", layers["docs/handoff.md"])
+            self.assertEqual("L1", layers["PLAN.md"])
+            self.assertEqual("L1", layers["docs/handoff/handoff.md"])
             self.assertEqual("L2", layers["README.md"])
             self.assertEqual("L2", layers["docs/subsystem/README.md"])
-            self.assertIn("docs/handoff.md", result["orphans"])
+            self.assertIn("docs/handoff/handoff.md", result["orphans"])
             self.assertIn("README.md", result["orphans"])
 
     def test_missing_required_l1_docs_are_reported(self):
@@ -69,17 +70,17 @@ class InventoryTests(unittest.TestCase):
             missing = {item["path"] for item in result["budget"]
                        if item.get("missing")}
 
-            self.assertEqual({"plan.md", "docs/handoff.md"},
+            self.assertEqual({"PLAN.md", "docs/handoff/handoff.md"},
                              missing - {"AGENTS.md"})
 
     def test_verification_marker_resets_but_does_not_disable_staleness(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             write(root, "AGENTS.md",
-                  "[plan](plan.md) [handoff](docs/handoff.md) "
+                  "[plan](PLAN.md) [handoff](docs/handoff/handoff.md) "
                   "[old](docs/old.md) [fresh](docs/fresh.md)\n")
-            write(root, "plan.md", "# Plan\n")
-            write(root, "docs/handoff.md", "# Handoff\n")
+            write(root, "PLAN.md", "# Plan\n")
+            write(root, "docs/handoff/handoff.md", "# Handoff\n")
             old_date = (date.today() - timedelta(days=180)).isoformat()
             old_doc = write(root, "docs/old.md", f"<!-- verified: {old_date} -->\n")
             fresh_doc = write(root, "docs/fresh.md",
@@ -98,11 +99,11 @@ class InventoryTests(unittest.TestCase):
     def test_bootstrap_uses_latest_five_actual_session_entries(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            write(root, "AGENTS.md", "[plan](plan.md) [handoff](docs/handoff.md)\n")
-            write(root, "plan.md", "# Plan\n")
-            write(root, "docs/handoff.md", "# Handoff\n")
+            write(root, "AGENTS.md", "[plan](PLAN.md) [handoff](docs/handoff/handoff.md)\n")
+            write(root, "PLAN.md", "# Plan\n")
+            write(root, "docs/handoff/handoff.md", "# Handoff\n")
             headings = "\n".join(f"## Session {number}" for number in (1, 3, 7, 9, 10, 12))
-            write(root, "docs/session-log.md", headings)
+            write(root, "docs/handoff/session-log.md", headings)
 
             result = inventory.audit(root, args())
             output = inventory.report(result, args())
@@ -125,9 +126,9 @@ class InventoryTests(unittest.TestCase):
     def test_broken_targets_in_unreachable_docs_do_not_create_noise(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            write(root, "AGENTS.md", "[plan](plan.md) [handoff](docs/handoff.md)\n")
-            write(root, "plan.md", "# Plan\n")
-            write(root, "docs/handoff.md", "# Handoff\n")
+            write(root, "AGENTS.md", "[plan](PLAN.md) [handoff](docs/handoff/handoff.md)\n")
+            write(root, "PLAN.md", "# Plan\n")
+            write(root, "docs/handoff/handoff.md", "# Handoff\n")
             write(root, "docs/orphan.md", "[missing](missing.md)\n")
 
             result = inventory.audit(root, args())
@@ -139,9 +140,9 @@ class InventoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             write(root, "AGENTS.md",
-                  "[plan](plan.md) [handoff](docs/handoff.md) [rules](docs/rules.md)\n")
-            write(root, "plan.md", "# Plan\n")
-            write(root, "docs/handoff.md", "# Handoff\n")
+                  "[plan](PLAN.md) [handoff](docs/handoff/handoff.md) [rules](docs/rules.md)\n")
+            write(root, "PLAN.md", "# Plan\n")
+            write(root, "docs/handoff/handoff.md", "# Handoff\n")
             write(root, "docs/rules.md", "[missing](missing.md)\n")
 
             result = inventory.audit(root, args())
@@ -188,6 +189,35 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(1, state["schema_version"])
         self.assertIsNone(state["last_tuned"])
         self.assertEqual([], state["rejected_candidates"])
+
+    def test_state_is_loaded_from_handoff_control_directory(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "AGENTS.md", "[plan](PLAN.md) [handoff](docs/handoff/handoff.md)\n")
+            write(root, "PLAN.md", "# Plan\n")
+            write(root, "docs/handoff/handoff.md", "# Handoff\n")
+            expected = {"schema_version": 1, "last_tuned": "2026-08-18"}
+            write(root, "docs/handoff/.curation-state.json", json.dumps(expected))
+
+            result = inventory.audit(root, args())
+
+            self.assertEqual(expected, result["curation_state"])
+
+    def test_pre_init_mode_does_not_report_expected_missing_startup_files(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "README.md", "# Initial project concept\n")
+
+            result = inventory.audit(root, args(pre_init=True))
+            output = inventory.report(result, args(pre_init=True))
+
+            self.assertEqual("pre-init", result["mode"])
+            self.assertEqual([], [item for item in result["budget"]
+                                  if item.get("missing")])
+            self.assertTrue(result["reachability_deferred"])
+            self.assertIn("missing startup and session files are expected", output)
+            self.assertIn("No session log expected", output)
+            self.assertIn("No orphan judgment is made", output)
 
 
 if __name__ == "__main__":

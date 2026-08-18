@@ -2,9 +2,9 @@
 
 ## Session start
 
-1. Read `docs/handoff.md`.
-2. Read `plan.md`.
-3. Check `docs/decisions.md` before changing retry behavior.
+1. Read `docs/handoff/handoff.md`.
+2. Read `PLAN.md`.
+3. Check `docs/handoff/decisions.md` before changing retry behavior.
 
 ## Invariants
 
@@ -14,7 +14,7 @@
 
 | Read this | When |
 |---|---|
-| `docs/decisions.md` | Before changing retry behavior |
+| `docs/handoff/decisions.md` | Before changing retry behavior |
 
 ## Project shape
 

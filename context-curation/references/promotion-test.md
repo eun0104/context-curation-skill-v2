@@ -45,7 +45,7 @@ imposed from outside, things that were tried and failed.
 
 ## Automatic rejection
 
-- Task progress → belongs in `plan.md`
+- Task progress → belongs in root `PLAN.md`
 - "Where I stopped" → belongs in `handoff.md`
 - Anything already stated in another persistent doc → add a pointer, don't restate
 - Anything the agent inferred but did not verify → not a fact yet; note it as an open question in `handoff.md`
@@ -71,4 +71,4 @@ Non-derivable ✓ (the rejected alternative is invisible in the code)
 
 **Candidate:** "Abstract is 7 words over the limit."
 Recurrence ✗ · Loss ✗ (a script measures it) · Stability ✗ (fixed next session) · Non-derivable ✗
-→ **Reject.** This is current state, not project knowledge. → `handoff.md` or `plan.md`.
+→ **Reject.** This is current state, not project knowledge. → `docs/handoff/handoff.md` or root `PLAN.md`.

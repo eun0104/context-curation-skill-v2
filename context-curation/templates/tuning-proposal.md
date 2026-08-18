@@ -23,7 +23,7 @@ and what does this proposal do about it.>
 ## B. Promotions
 
 ### B1. <the fact, in one sentence>
-- **Source:** `docs/session-log.md`, Session 007, line 42 <or file path / commit>
+- **Source:** `docs/handoff/session-log.md`, Session 007, line 42 <or file path / commit>
 - **Test:** recurrence ✓ · loss ✓ · stability ✓ · non-derivable ✗ → **3/4, promote**
 - **Destination:** `docs/domain/gotchas.md` (new section)
 - **AGENTS.md:** pointer already exists / add row: `| docs/domain/gotchas.md | when a tool fails unexpectedly |`
@@ -47,7 +47,7 @@ and what does this proposal do about it.>
 
 | File | Reason | Superseded by |
 |---|---|---|
-| `docs/old-plan.md` | milestone closed, content merged | `plan.md` |
+| `docs/old-plan.md` | milestone closed, content merged | `PLAN.md` |
 
 ---
 
@@ -71,7 +71,7 @@ one-off doc edits above.
 
 | Doc | Cadence now | Proposed | Why |
 |---|---|---|---|
-| `docs/decisions.md` | per-session | on-event | filler entries when no real decision was made |
+| `docs/handoff/decisions.md` | per-session | on-event | filler entries when no real decision was made |
 
 ### F2. handoff.md fields
 
@@ -86,7 +86,7 @@ cost at every future session end.
 ### F3. Draft spec diff
 
 ```markdown
-<the exact lines changing in docs/handoff-spec.md>
+<the exact lines changing in docs/handoff/handoff-spec.md>
 ```
 
 **Net change to per-session work:** <none / +1 file / −1 field>

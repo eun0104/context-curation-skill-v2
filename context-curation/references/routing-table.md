@@ -7,15 +7,15 @@ Once a fact passes the promotion test, it needs exactly one home.
 | The fact is... | Destination | Layer | AGENTS.md entry |
 |---|---|---|---|
 | A hard constraint ("never", "must always") | `docs/rules/<topic>-invariants.md` | L2 | **One line, verbatim** + link |
-| A choice between alternatives, with reasoning | `docs/decisions.md` | L2 | Conditional pointer |
+| A choice between alternatives, with reasoning | `docs/handoff/decisions.md` | L2 | Conditional pointer |
 | System structure, module boundaries, data flow | `docs/architecture.md` | L2 | Conditional pointer |
 | Odd behaviour of an external system | `docs/domain/gotchas.md` | L2 | Conditional pointer |
 | Domain knowledge the agent lacks (physics, process, notation) | `docs/domain/<topic>.md` | L2 | Conditional pointer |
 | Settled parameters, paths, magic numbers | `docs/reference/<topic>.md` | L2 | Conditional pointer |
 | How to run something | `README.md` | L2 | Conditional pointer |
-| Milestones and completion status | `plan.md` | L1 | Always-read pointer |
+| Milestones and completion status | root `PLAN.md` | L1 | Always-read pointer |
 | Current position, blockers, next action | `handoff.md` | L1 | Always-read pointer |
-| Raw session narrative | `docs/session-log.md` or `docs/sessions/NNN-*.md` | L3 | None — grep only |
+| Raw session narrative | `docs/handoff/session-log.md` or `docs/handoff/sessions/NNN-*.md` | L3 | None — grep only |
 
 Invariants are the only category that gets content copied into AGENTS.md, because a rule
 the agent never reads is a rule that doesn't exist. Keep those lines to one sentence each,
@@ -88,7 +88,7 @@ Each L2 pointer is one row with a trigger condition specific enough to be action
 | Read this | When |
 |---|---|
 | `docs/rules/measurement-invariants.md` | Before any code that reads, transforms, or reports measured data |
-| `docs/decisions.md` | Before changing an algorithm, or when tempted by an approach that looks obviously better |
+| `docs/handoff/decisions.md` | Before changing an algorithm, or when tempted by an approach that looks obviously better |
 | `docs/domain/gotchas.md` | When a tool fails in a way that doesn't match its documentation |
 ```
 

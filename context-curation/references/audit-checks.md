@@ -6,6 +6,7 @@ later ones.
 
 ## Contents
 
+0. Pre-init mode
 1. L0 over budget
 2. Unreachable documents
 3. Broken pointers
@@ -13,6 +14,13 @@ later ones.
 5. Stale documents
 6. Session log volume
 7. Handoff bloat
+
+## 0. Pre-init mode
+
+Run with `--pre-init` only before `session-context-init`. Missing root `AGENTS.md`, root `PLAN.md`,
+handoff files, and session logs are expected in this mode and are not defects. Review any existing
+documentation for contradictions and reachability, but use the initial project concept and plan
+to design a minimal contract rather than manufacturing history-based findings.
 
 ## 1. L0 over budget
 
@@ -25,7 +33,7 @@ is the *only* cost of L0 bloat, and it is enough on its own.
 
 Demote in this order until it fits:
 
-1. **Prose explaining rationale** → `architecture.md` or `decisions.md`. AGENTS.md answers "what do I do"; rationale answers "why", which is only needed when something is being changed.
+1. **Prose explaining rationale** → `docs/architecture.md` or `docs/handoff/decisions.md`. AGENTS.md answers "what do I do"; rationale answers "why", which is only needed when something is being changed.
 2. **Detailed procedures** → their own doc, or a script. A procedure written out in full is usually a script that hasn't been written yet.
 3. **Lists longer than ~7 items** → a reference table.
 4. **Duplicated content** → replace with a pointer.
@@ -37,7 +45,7 @@ startup sequence. Those are why AGENTS.md exists.
 If it still doesn't fit, the pointer table itself is too long — group related docs under a
 single index doc and point at the index.
 
-The audit treats only root `plan.md` and `docs/handoff.md` as L1. A README is conditional
+The audit treats only root `PLAN.md` and `docs/handoff/handoff.md` as L1. A README is conditional
 documentation unless AGENTS.md explicitly makes it part of the session-start sequence.
 
 ## 2. Unreachable documents
@@ -47,7 +55,7 @@ documentation unless AGENTS.md explicitly makes it part of the session-start seq
 Reachability is computed by following markdown links and backticked paths from AGENTS.md.
 An orphan is never read, so it silently rots while looking maintained.
 
-L1 documents are not exempt: if `plan.md` or `docs/handoff.md` is unreachable from AGENTS.md,
+L1 documents are not exempt: if `PLAN.md` or `docs/handoff/handoff.md` is unreachable from AGENTS.md,
 the session-start contract is broken and the audit must report it.
 
 Three possible resolutions:
@@ -61,7 +69,7 @@ it would be a surprise.
 
 ## 3. Broken pointers
 
-**Report:** `AGENTS.md → docs/decisions.md (TARGET MISSING)`
+**Report:** `AGENTS.md → docs/handoff/decisions.md (TARGET MISSING)`
 
 The most damaging finding, because the agent reports having consulted a doc that isn't
 there and proceeds with false confidence. Fix immediately: correct the path, or create the
@@ -117,6 +125,6 @@ optional and only worth doing if grep results have become noisy.
 Not detected by the script — check `handoff.md` by hand.
 
 If an item has survived three or more handoffs unchanged, it is not session state. Either
-it's project state that should be promoted, or it's a stalled task that belongs in `plan.md`
+it's project state that should be promoted, or it's a stalled task that belongs in `PLAN.md`
 as an explicit blocker. Carrying it forward silently is how a handoff file turns into a
 second, unmanaged AGENTS.md.
