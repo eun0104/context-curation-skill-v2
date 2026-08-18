@@ -118,6 +118,15 @@ Reports per-doc token counts, L0 budget status, orphans, broken pointers, stale 
 duplicated passages, and how many sessions are pending harvest. If Python is unavailable,
 approximate with `wc -l` and `grep -rn "docs/" AGENTS.md`.
 
+Then check the two fixed project-local session skill paths:
+
+```bash
+python <skill-dir>/scripts/session_skill_hooks.py --root .
+```
+
+This check is read-only. `skill-missing`, `hook-missing`, `outdated`, or `malformed-markers` must
+become a blocking proposal item. Do not inspect or modify a global session skill as a substitute.
+
 For how to fix each finding, read `references/audit-checks.md` now.
 
 ### Step 2 — Harvest
@@ -254,20 +263,24 @@ item, ask whether the underlying rule should change — pushback usually general
 
 Only after approval, in this order:
 
-1. Create or edit the destination docs, using `templates/` for new files.
-2. Update the AGENTS.md pointer table. Every new L2 doc needs a trigger condition phrased as a
+1. If a session-hook blocking item was approved, run
+   `python <skill-dir>/scripts/session_skill_hooks.py --root . --apply`. It changes only the two
+   known project-local SKILL.md files and is idempotent. Resolve missing skills or malformed
+   markers manually rather than writing elsewhere.
+2. Create or edit the destination docs, using `templates/` for new files.
+3. Update the AGENTS.md pointer table. Every new L2 doc needs a trigger condition phrased as a
    situation the agent will recognise itself to be in — "when working on this project" is not
    one. In pre-init mode, do not create AGENTS.md or PLAN.md; put their approved startup contract
    in the spec and let `session-context-init` create both root files.
-3. **Update `docs/handoff/handoff-spec.md`** — see the next section. Both project-local session
+4. **Update `docs/handoff/handoff-spec.md`** — see the next section. Both project-local session
    skills consume it. Classify each doc `per-session` / `on-event` / `frozen` and add only
    `per-session` docs to the checklist.
-4. Append an entry to `docs/handoff/decisions.md` describing the restructuring itself. In pre-init
+5. Append an entry to `docs/handoff/decisions.md` describing the restructuring itself. In pre-init
    mode, let `session-context-init` create this file from the approved spec instead.
-5. Update `docs/handoff/.curation-state.json`: date, session number (null before init),
+6. Update `docs/handoff/.curation-state.json`: date, session number (null before init),
    `harvested_through_session`, one-line summary, and structured rejected-candidate records. Store
    each as `{"label": ..., "rejected_at_session": ..., "reason": ..., "reconsider_if": ...}`.
-6. Remove `docs/_tuning-proposal.md` — it is a temporary review artifact, not a persistent document. A stale proposal left in `docs/` becomes an orphan at the next audit.
+7. Remove `docs/_tuning-proposal.md` — it is a temporary review artifact, not a persistent document. A stale proposal left in `docs/` becomes an orphan at the next audit.
 
 ### Step 7 — Self-check
 
@@ -287,8 +300,9 @@ while an old summary of it survives elsewhere — and it is much cheaper to catc
 sessions later when a session has already acted on the wrong copy.
 
 In pre-init mode, rerun with `--pre-init`, verify the spec and both local hooks instead of absent
-startup files, then instruct the user to run `session-context-init`. Perform the normal AGENTS.md
-and PLAN.md checks after init creates them.
+startup files, rerun `session_skill_hooks.py --root .` and require both statuses to be `installed`,
+then instruct the user to run `session-context-init`. Perform the normal AGENTS.md and PLAN.md
+checks after init creates them.
 
 ## Tuning the handoff spec
 
@@ -307,15 +321,16 @@ one data point. Mistaking a local need for a universal one is the cheap and comm
 and it is the one whose consequences land somewhere you are not looking.
 
 Keep `session-context-init` and `session-handoff` project-local. Treat shared copies as upstream
-templates and pin the runtime copies under `.opencode/skill/` so their behaviour is versioned with
+templates and pin the runtime copies under `.opencode/skills/` so their behaviour is versioned with
 the project. Keep the spec mandatory even when both skills are local: it is the single declarative
 contract that prevents init and handoff from drifting apart. Edit a local SKILL.md only when the
 change cannot be represented in the spec; record generalizable improvements for the shared
 upstream in section G.
 
 Both project-local session skills must read `docs/handoff/handoff-spec.md`. Install those hooks
-before pre-init curation. If either hook is missing, make fixing the project-local copy a blocking
-proposal item; do not silently continue with two different path contracts.
+during the first approved pre-init curation. If either local skill or hook is missing, make fixing
+the project-local copy a blocking proposal item; do not silently continue with two different path
+contracts. Use `scripts/session_skill_hooks.py` so detection and insertion use the same markers.
 
 ### When a finding generalizes
 
@@ -384,4 +399,5 @@ fact belongs in the persistent layer and is not there.
 | `templates/handoff-spec.md` | When changing what handoff captures |
 | `templates/*.md` | Step 6 — creating a new persistent doc |
 | `scripts/docs_inventory.py` | Step 1 — run it, no need to read it |
+| `scripts/session_skill_hooks.py` | Steps 1, 6, and 7 — check, apply after approval, verify |
 | `integration/` | First-time setup only |

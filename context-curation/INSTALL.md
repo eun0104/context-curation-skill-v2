@@ -5,12 +5,12 @@
 
 ## 1. 설치 위치
 
-opencode는 다른 구성요소와 마찬가지로 **단수형 디렉토리**를 씁니다
-(`.opencode/agent/`, `.opencode/command/`, `.opencode/skill/`).
+이 환경에서는 프로젝트 스킬을 항상 루트의 **복수형** `.opencode/skills/` 아래에 둡니다.
+전역 설치 경로는 기존 OpenCode 구성인 `~/.config/opencode/skill/`을 그대로 사용합니다.
 
 **프로젝트 전용:**
 ```
-<프로젝트>/.opencode/skill/context-curation/
+<프로젝트>/.opencode/skills/context-curation/
 ```
 
 **모든 프로젝트에서 공용 (권장):**
@@ -49,7 +49,7 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
 <프로젝트>/
 ├── AGENTS.md                         ← session-context-init 이 생성
 ├── PLAN.md                           ← session-context-init 이 생성
-├── .opencode/skill/
+├── .opencode/skills/
 │   ├── session-context-init/         ← 공유 원본에서 복사한 프로젝트 고정본
 │   └── session-handoff/              ← 공유 원본에서 복사한 프로젝트 고정본
 └── docs/handoff/
@@ -61,16 +61,16 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
 ```
 
 `context-curation`은 전역 설치를 유지하되, `session-context-init`과 `session-handoff`는 공유
-원본을 프로젝트의 `.opencode/skill/`로 복사해 고정해서 사용합니다. 두 로컬 스킬의 upstream
+원본을 프로젝트의 `.opencode/skills/`로 복사해 고정해서 사용합니다. 두 로컬 스킬의 upstream
 버전이나 복사 날짜를 기록해 두세요.
 
 `integration/` 폴더에는 두 session 스킬용 계약 hook, AGENTS.md 조각과 설명 문서가 있습니다.
 
 1. **`session-context-init-snippet.md`** — 로컬 init 스킬이 실행 전에
    `docs/handoff/handoff-spec.md`를 요구하고, 루트 `AGENTS.md`·`PLAN.md`와 handoff 하위 파일을
-   올바른 위치에 만들게 합니다.
+   올바른 위치에 만들게 하는 정본 hook 블록입니다.
 2. **`session-handoff-snippet.md`** — 로컬 handoff 스킬이 같은 spec을 읽고 쓰기 경로·주기·
-   필드를 따르게 합니다.
+   필드를 따르게 하는 정본 hook 블록입니다.
 3. **`agents-md-snippet.md`** — 생성된 AGENTS.md의 포인터 표에 한 줄을 추가합니다.
    자동 트리거가 불안정해도 5세션 주기와 문서 이상 징후를 인식하게 합니다.
 4. **`README-integration.md`** — pre-init부터 주기적 tuning까지 전체 관계를
@@ -79,9 +79,10 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
 ### 첫 프로젝트 실행 순서
 
 1. 프로젝트 초기 구상과 대략적인 계획을 세웁니다.
-2. 두 session 스킬을 프로젝트 로컬로 복사하고 위 hook을 추가합니다.
-3. `context-curation`을 pre-init mode로 실행해 최소 문서 계약을 제안받습니다.
-4. 승인 후 `docs/handoff/handoff-spec.md`와 상태 파일을 적용합니다.
+2. 두 session 스킬을 프로젝트의 `.opencode/skills/`로 복사합니다.
+3. `context-curation`을 pre-init mode로 실행합니다. 훅 검사 결과 누락·구버전이면 제안서의
+   blocking 항목으로 나타납니다.
+4. 승인 후 훅과 `docs/handoff/handoff-spec.md`, 상태 파일을 적용합니다.
 5. 그다음 `session-context-init`을 실행합니다.
 
 Init보다 먼저 실행하는 감사 명령은 `--pre-init`을 사용합니다. 이 모드에서는 아직 없는
@@ -90,6 +91,23 @@ AGENTS.md, PLAN.md와 session log를 오류로 보고하지 않습니다.
 ```bash
 python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root . --pre-init
 ```
+
+두 session hook만 별도로 점검할 수도 있습니다. 기본 동작은 읽기 전용입니다.
+
+```bash
+python ~/.config/opencode/skill/context-curation/scripts/session_skill_hooks.py --root .
+```
+
+제안서의 hook 항목을 승인한 뒤에만 적용 옵션을 사용합니다.
+
+```bash
+python ~/.config/opencode/skill/context-curation/scripts/session_skill_hooks.py --root . --apply
+```
+
+이 스크립트는 `.opencode/skills/session-context-init/SKILL.md`와
+`.opencode/skills/session-handoff/SKILL.md`만 수정합니다. 전역 스킬은 수정하지 않으며, 같은
+마커 블록이 이미 있으면 다시 삽입하지 않습니다. `skill-missing`이나 `malformed-markers`는
+자동으로 우회하지 않으므로 해당 프로젝트 사본을 먼저 바로잡습니다.
 
 placeholder 상태 파일을 미리 복사하거나 날짜를 손으로 채우지 마세요. init 후 상태 파일이 없거나
 읽을 수 없으면 감사기는 전체 로그의 태그를 추출한 뒤 최근 5개 세션 항목을 bootstrap 범위로
@@ -137,7 +155,7 @@ M2 마일스톤 끝났으니 문서 정리하자.
 ```bash
 python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root .
 # project-local installation:
-# python .opencode/skill/context-curation/scripts/docs_inventory.py --root .
+# python .opencode/skills/context-curation/scripts/docs_inventory.py --root .
 ```
 
 표준 라이브러리만 쓰고 네트워크 접근이 없어서 사내망에서 그대로 돕니다.
@@ -186,8 +204,10 @@ Python 3.8 이상이면 됩니다. 환경에서 실행 파일 이름이 `python3
 |---|---|
 | `/tune-docs`가 없음 | `command/tune-docs.md`를 `~/.config/opencode/command/`에 복사했는지 확인 |
 | 자동 호출이 안 됨 | AGENTS.md에 `integration/agents-md-snippet.md`를 추가했는지 확인 |
-| init이 예전 경로에 파일을 만듦 | 로컬 `session-context-init/SKILL.md`에 contract hook이 있는지 확인 |
-| handoff spec이 무시됨 | 로컬 `session-handoff/SKILL.md`에 contract hook이 있는지 확인 |
+| init이 예전 경로에 파일을 만듦 | hook 검사기로 `.opencode/skills/session-context-init/SKILL.md` 상태 확인 |
+| handoff spec이 무시됨 | hook 검사기로 `.opencode/skills/session-handoff/SKILL.md` 상태 확인 |
+| hook 적용 결과가 `skill-missing` | 두 프로젝트 스킬이 정확히 `.opencode/skills/` 아래에 있는지 확인 |
+| hook 적용 결과가 `malformed-markers` | 불완전한 hook 마커를 수동 복구한 뒤 다시 점검 |
 | 감사기가 실행되지 않음 | Python 3.8+와 설치 위치에 맞는 스크립트 경로 확인 |
 | 상태 파일이 없음 | 정상적인 pre-init일 수 있음; 직접 만들지 말고 첫 승인 실행에서 생성 |
 | 승인 전에 문서가 변경됨 | 적용하지 말고 제안서만 남긴 뒤 `SKILL.md`의 Step 5 준수 여부 확인 |
