@@ -88,7 +88,7 @@ Include **numerical** gotchas alongside tool ones. Distinguishing a convergence 
 physical result is a recurring judgement here, and getting it wrong in either direction wastes a
 session — chasing physics that is a solver artefact, or dismissing real physics as one.
 
-### `docs/decisions.md`
+### `docs/handoff/decisions.md`
 
 Physics choices are ADRs. `Revisit if` maps naturally onto data conditions:
 *"Revisit if we obtain low-temperature data below 100 K"* — the decision was made under a data

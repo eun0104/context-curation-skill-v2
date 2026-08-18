@@ -23,22 +23,23 @@
 | 레이어 | 문서 | 읽는 시점 | 예산 |
 |---|---|---|---|
 | L0 | `AGENTS.md` | 매 세션 무조건 | 2,000 토큰 하드캡 |
-| L1 | `docs/handoff.md`, `plan.md` | 세션 시작 시 | 각 ~1,500 |
+| L1 | 루트 `PLAN.md`, `docs/handoff/handoff.md` | 세션 시작 시 | 각 ~1,500 |
 | L2 | `decisions` · `architecture` · `domain` · `rules` · `reference` | 조건부 | 무제한, 포인터 필수 |
-| L3 | `docs/session-log.md`, `docs/archive/` | 통째로 안 읽음, grep만 | append-only |
+| L3 | `docs/handoff/session-log.md`, `docs/archive/` | 통째로 안 읽음, grep만 | append-only |
 
 L0 상한은 지출 한도가 아니라 **형태 강제 장치**입니다. 반드시 지켜야 할 불변 규칙 일곱 줄이
 단지 사실일 뿐인 문단들과 같은 지면에서 경쟁하면, 규칙이 규칙으로 읽히기를 그칩니다.
 
 ## 작동 방식
 
-1. 문서 예산, 포인터, 도달성, 중복, freshness와 세션 로그 규모를 감사합니다.
-2. 전체 로그의 태그를 검색하고 필요한 세션 본문만 읽습니다. 상태 파일이 아직 없으면 최근
+1. 첫 context init 전에 프로젝트 초기 구상과 대략적인 계획으로 최소 메모리 계약을 설계합니다.
+2. init 후 문서 예산, 포인터, 도달성, 중복, freshness와 세션 로그 규모를 감사합니다.
+3. 전체 로그의 태그를 검색하고 필요한 세션 본문만 읽습니다. 상태 파일이 아직 없으면 최근
    5개 세션 항목을 bootstrap 범위로 사용합니다.
-3. 반복성·손실 비용·안정성·비유도성으로 영구 승격 후보를 판정합니다.
-4. `AGENTS.md`의 읽기 경로와 `docs/handoff-spec.md`의 쓰기 경로를 함께 조정하는 제안서를
+4. 반복성·손실 비용·안정성·비유도성으로 영구 승격 후보를 판정합니다.
+5. `AGENTS.md`의 읽기 경로와 `docs/handoff/handoff-spec.md`의 쓰기 경로를 함께 조정하는 제안서를
    작성하고 멈춥니다.
-5. 사용자가 항목별로 승인한 뒤에만 적용하고, 감사기를 다시 실행해 검증합니다.
+6. 사용자가 항목별로 승인한 뒤에만 적용하고, 감사기를 다시 실행해 검증합니다.
 
 한 번 거부된 후보도 영구 제외하지 않습니다. 이후 세션에서 다시 나타나거나 증거가 바뀌면
 재평가합니다.
@@ -54,10 +55,10 @@ cp context-curation/command/tune-docs.md ~/.config/opencode/command/
 # cp -r context-curation <project>/.opencode/skill/
 ```
 
-설치 후 `integration/session-handoff-snippet.md`의 project-override hook을 공유
-`session-handoff` 스킬에 한 번 추가하고, `integration/agents-md-snippet.md`를 프로젝트
-AGENTS.md에 연결합니다. Placeholder 상태 파일을 미리 만들 필요는 없습니다. 첫 승인 실행이
-필요한 `docs/.curation-state.json`과 `docs/handoff-spec.md`를 생성합니다.
+`context-curation`은 전역으로 두되 `session-context-init`과 `session-handoff`는 프로젝트의
+`.opencode/skill/`로 복사합니다. `integration/`의 contract hook을 두 로컬 스킬에 추가하고,
+초기 계획이 선 뒤 `session-context-init`보다 먼저 curation pre-init mode를 실행합니다. 첫 승인
+실행이 `docs/handoff/handoff-spec.md`와 `docs/handoff/.curation-state.json`을 생성합니다.
 
 전체 설치 및 연동 절차는 [`context-curation/INSTALL.md`](context-curation/INSTALL.md),
 실행 계약은 [`context-curation/SKILL.md`](context-curation/SKILL.md)를 참고하세요.
@@ -78,7 +79,7 @@ context-curation/
 │   └── profiles/
 │       └── physics-modeling.md    # 물리 모델링·데이터 피팅 프로젝트용 프로파일
 ├── templates/                     # 새 문서 생성용 템플릿
-└── integration/                   # session-handoff 연동 스니펫
+└── integration/                   # 프로젝트 로컬 init/handoff 연동 스니펫
 
 tests/
 ├── test_docs_inventory.py         # 표준 라이브러리 회귀 테스트
@@ -90,9 +91,9 @@ tests/
 **제안 후 정지.** Step 5에서 `docs/_tuning-proposal.md`를 쓰고 멈춥니다. 승인 전에는 아무것도
 고치지 않습니다. 문서 재구성은 사후 검토가 어렵습니다.
 
-**프로젝트 밖에 쓰지 않음.** 공유 스킬에 넣을 만한 발견은 제안서 섹션 G에 **메모만** 하고
-적용은 사람이 합니다. 여러 프로젝트가 의존하는 파일은, 그 프로젝트들을 함께 고려한 사람이
-판단해서 바꿔야 합니다.
+**실행 session 스킬은 프로젝트 로컬.** 공유 스킬은 upstream 템플릿으로 두고 프로젝트마다
+고정한 사본을 사용합니다. 로컬이어도 선언적 handoff spec을 유지해 init과 handoff의 계약이
+갈라지지 않게 합니다.
 
 **지속 문서 삭제 없음.** `docs/archive/`로 이동하고 무엇이 대체했는지 남깁니다.
 검토용 임시 파일인 `docs/_tuning-proposal.md`만 승인된 적용이 끝난 뒤 제거합니다.
@@ -113,6 +114,9 @@ curation 상태와 handoff control spec은 이 제한에 포함하지 않습니�
 ```bash
 # 저장소에서 직접
 python context-curation/scripts/docs_inventory.py --root /path/to/project
+
+# session-context-init 실행 전
+# python context-curation/scripts/docs_inventory.py --root /path/to/project --pre-init
 
 # 전역 설치본
 # python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root /path/to/project
@@ -138,8 +142,8 @@ README는 조건부 문서인 L2로 취급하며, 파일명이 README라는 이�
 python -m unittest discover -s tests -v
 ```
 
-현재 회귀 테스트 9개가 통과합니다. 별도 맥락 없이 수행한 forward test에서도 bootstrap mode,
-새 L2 파일 2개 제한, 중복 후보 제거, 제안 후 정지 경계를 모두 지켰습니다.
+현재 pre-init 생명주기, handoff 하위 경로, bootstrap 범위, 도달성, freshness와 curation state
+탐색을 포함한 회귀 테스트 11개가 통과합니다.
 
 ## 라이선스
 

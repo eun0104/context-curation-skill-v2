@@ -47,32 +47,53 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
 
 ```
 <프로젝트>/
-├── AGENTS.md              ← session-context-init 이 생성
-├── plan.md                ← session-context-init 이 생성
-└── docs/
-    ├── handoff.md         ← session-handoff 가 매 세션 갱신
-    ├── session-log.md     ← session-handoff 가 append (## Session NNN 헤딩)
-    ├── decisions.md       ← session-handoff 가 append
-    └── .curation-state.json   ← 첫 승인 실행이 생성·관리
+├── AGENTS.md                         ← session-context-init 이 생성
+├── PLAN.md                           ← session-context-init 이 생성
+├── .opencode/skill/
+│   ├── session-context-init/         ← 공유 원본에서 복사한 프로젝트 고정본
+│   └── session-handoff/              ← 공유 원본에서 복사한 프로젝트 고정본
+└── docs/handoff/
+    ├── handoff-spec.md               ← context-curation 이 승인 후 관리
+    ├── handoff.md                    ← session-handoff 가 매 세션 갱신
+    ├── session-log.md                ← session-handoff 가 append
+    ├── decisions.md                  ← session-handoff 가 on-event append
+    └── .curation-state.json          ← context-curation 이 관리
 ```
 
-`integration/` 폴더에는 두 개의 설치 조각과 한 개의 설명 문서가 있습니다.
+`context-curation`은 전역 설치를 유지하되, `session-context-init`과 `session-handoff`는 공유
+원본을 프로젝트의 `.opencode/skill/`로 복사해 고정해서 사용합니다. 두 로컬 스킬의 upstream
+버전이나 복사 날짜를 기록해 두세요.
 
-1. **`session-handoff-snippet.md`** — 공유 `session-handoff/SKILL.md`에 project override
-   hook을 한 번 추가합니다. `docs/handoff-spec.md`가 생기면 먼저 읽고 따르게 하는 유일한
-   공유 스킬 수정입니다.
-2. **`agents-md-snippet.md`** — 프로젝트 AGENTS.md의 포인터 표에 한 줄을 추가합니다.
+`integration/` 폴더에는 두 session 스킬용 계약 hook, AGENTS.md 조각과 설명 문서가 있습니다.
+
+1. **`session-context-init-snippet.md`** — 로컬 init 스킬이 실행 전에
+   `docs/handoff/handoff-spec.md`를 요구하고, 루트 `AGENTS.md`·`PLAN.md`와 handoff 하위 파일을
+   올바른 위치에 만들게 합니다.
+2. **`session-handoff-snippet.md`** — 로컬 handoff 스킬이 같은 spec을 읽고 쓰기 경로·주기·
+   필드를 따르게 합니다.
+3. **`agents-md-snippet.md`** — 생성된 AGENTS.md의 포인터 표에 한 줄을 추가합니다.
    자동 트리거가 불안정해도 5세션 주기와 문서 이상 징후를 인식하게 합니다.
-3. **`README-integration.md`** — 위 두 조각과 프로젝트 로컬 handoff spec의 관계를
+4. **`README-integration.md`** — pre-init부터 주기적 tuning까지 전체 관계를
    설명합니다. 설치 대상은 아닙니다.
 
-첫 승인된 curation 실행이 `docs/handoff-spec.md`와 `docs/.curation-state.json`을 필요할 때
-생성합니다. 미리 placeholder 상태 파일을 복사하거나 날짜를 손으로 채우지 마세요. 상태 파일이
-없거나 읽을 수 없으면 감사 스크립트는 전체 로그에서 태그를 추출한 뒤 최근 5개 세션 항목을
-bootstrap 범위로 안내합니다.
+### 첫 프로젝트 실행 순서
 
-`handoff-spec.md`가 생기기 전에는 기존 `session-handoff` 기본 동작이 그대로 유지됩니다.
-태그와 curation 주기 검사는 첫 spec이 승인된 뒤부터 프로젝트 로컬 규칙으로 적용됩니다.
+1. 프로젝트 초기 구상과 대략적인 계획을 세웁니다.
+2. 두 session 스킬을 프로젝트 로컬로 복사하고 위 hook을 추가합니다.
+3. `context-curation`을 pre-init mode로 실행해 최소 문서 계약을 제안받습니다.
+4. 승인 후 `docs/handoff/handoff-spec.md`와 상태 파일을 적용합니다.
+5. 그다음 `session-context-init`을 실행합니다.
+
+Init보다 먼저 실행하는 감사 명령은 `--pre-init`을 사용합니다. 이 모드에서는 아직 없는
+AGENTS.md, PLAN.md와 session log를 오류로 보고하지 않습니다.
+
+```bash
+python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root . --pre-init
+```
+
+placeholder 상태 파일을 미리 복사하거나 날짜를 손으로 채우지 마세요. init 후 상태 파일이 없거나
+읽을 수 없으면 감사기는 전체 로그의 태그를 추출한 뒤 최근 5개 세션 항목을 bootstrap 범위로
+안내합니다.
 
 ### 공유 파일 정책
 
@@ -80,19 +101,15 @@ bootstrap 범위로 안내합니다.
 
 | 변경 성격 | 대상 | 적용 주체 |
 |---|---|---|
-| 이 프로젝트 전용 (문서 집합, 주기, 필드) | `docs/handoff-spec.md` | 큐레이션 (승인 후) |
+| 이 프로젝트 전용 (문서 집합, 주기, 필드) | `docs/handoff/handoff-spec.md` | 큐레이션 (승인 후) |
 | 일반화 가능 (모든 프로젝트가 원할 개선) | 제안서 섹션 G에 메모만 | 공유 스킬 관리자 |
 
-전역 handoff 스킬을 여러 프로젝트가 공유하는 이상, 그 파일은 다른 프로젝트들을 함께 고려한
-사람이 판단해서 바꿔야 합니다. 한 프로젝트의 튜닝 실행에서 부수적으로 바뀌면, 증거는 그
-프로젝트 하나 폭이고 검토자는 그 프로젝트 문서만 보고 있는 상태가 됩니다. 게다가 전역 파일
-수정은 어느 프로젝트 기록에도 흔적이 안 남아서 나중에 복원이 안 됩니다.
+프로젝트 로컬 스킬은 해당 저장소에서 검토·버전 관리할 수 있습니다. 그래도 경로와 필드 같은
+선언적 설정은 SKILL.md 두 곳에 복사하지 말고 spec 한 곳에 둡니다. 절차 자체를 바꿔야 할 때만
+로컬 SKILL.md를 수정합니다.
 
 섹션 G는 **실행 항목이 아니라 운영자 검토용 메모**입니다. 공유 스킬 관리자가 다른 프로젝트에
 미칠 영향을 확인한 뒤 별도로 적용합니다.
-
-`session-handoff`가 프로젝트 로컬(`.opencode/skill/`)에 있다면 이 구분이 사라집니다.
-전부 프로젝트 범위이고 spec 파일도 선택사항이며, SKILL.md를 직접 고쳐도 됩니다.
 
 ## 3. 사용법
 
@@ -131,11 +148,12 @@ Python 3.8 이상이면 됩니다. 환경에서 실행 파일 이름이 `python3
 | 옵션 | 기본값 | 의미 |
 |---|---|---|
 | `--l0-budget` | 2000 | AGENTS.md 토큰 상한 |
-| `--l1-budget` | 1500 | plan.md / handoff.md 상한 |
+| `--l1-budget` | 1500 | 루트 PLAN.md / docs/handoff/handoff.md 상한 |
 | `--stale-days` | 90 | 이보다 오래된 문서를 의심 대상으로 표시 |
 | `--dup-threshold` | 0.45 | 문단 중복 판정 유사도 (0~1) |
 | `--context-window` | 200000 | 수확 범위를 계산할 컨텍스트 크기 |
 | `--bootstrap-sessions` | 5 | 상태 파일이 없을 때 본문을 읽을 최근 세션 수 |
+| `--pre-init` | 꺼짐 | init 전 누락 startup/session 파일을 정상으로 처리 |
 | `--json` | | 사람 대신 에이전트가 읽을 형식 |
 
 토큰 수치는 문자 수 기반 **추정치**입니다(한글은 1.5자/토큰, ASCII는 4자/토큰 가정).
@@ -168,9 +186,10 @@ Python 3.8 이상이면 됩니다. 환경에서 실행 파일 이름이 `python3
 |---|---|
 | `/tune-docs`가 없음 | `command/tune-docs.md`를 `~/.config/opencode/command/`에 복사했는지 확인 |
 | 자동 호출이 안 됨 | AGENTS.md에 `integration/agents-md-snippet.md`를 추가했는지 확인 |
-| handoff spec이 무시됨 | 공유 `session-handoff/SKILL.md`에 project-override hook이 있는지 확인 |
+| init이 예전 경로에 파일을 만듦 | 로컬 `session-context-init/SKILL.md`에 contract hook이 있는지 확인 |
+| handoff spec이 무시됨 | 로컬 `session-handoff/SKILL.md`에 contract hook이 있는지 확인 |
 | 감사기가 실행되지 않음 | Python 3.8+와 설치 위치에 맞는 스크립트 경로 확인 |
-| 상태 파일이 없음 | 정상적인 첫 실행일 수 있음; 직접 만들지 말고 첫 승인 실행에서 생성 |
+| 상태 파일이 없음 | 정상적인 pre-init일 수 있음; 직접 만들지 말고 첫 승인 실행에서 생성 |
 | 승인 전에 문서가 변경됨 | 적용하지 말고 제안서만 남긴 뒤 `SKILL.md`의 Step 5 준수 여부 확인 |
 | 섹션 G가 자동 적용됨 | 되돌린 뒤 공유 스킬 관리자가 영향 범위를 별도로 검토 |
 

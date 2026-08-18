@@ -16,6 +16,7 @@ Usage:
     python docs_inventory.py --root .
     python docs_inventory.py --root . --json
     python docs_inventory.py --root . --stale-days 60 --l0-budget 1500
+    python docs_inventory.py --root . --pre-init
 """
 
 from __future__ import annotations
@@ -49,20 +50,20 @@ EXCLUDE_PARTS = {
 
 # Session logs may be one append-only file or one file per session. Both supported.
 SESSION_GLOBS = [
-    "docs/session-log.md",
-    "docs/session_log.md",
-    "docs/sessions/**/*.md",
-    "docs/session-logs/**/*.md",
+    "docs/handoff/session-log.md",
+    "docs/handoff/session_log.md",
+    "docs/handoff/sessions/**/*.md",
+    "docs/handoff/session-logs/**/*.md",
 ]
 
 # Matches "## Session 007", "### session-12", "## 세션 3"
 SESSION_MARKER_RE = re.compile(
     r"^#{1,4}\s*(?:session|세션)\s*[-#:]?\s*(\d+)", re.IGNORECASE | re.MULTILINE)
 
-L1_PATHS = {"plan.md", "docs/handoff.md"}
-REQUIRED_L1_PATHS = ("plan.md", "docs/handoff.md")
+L1_PATHS_LOWER = {"plan.md", "docs/handoff/handoff.md"}
+REQUIRED_L1_PATHS = ("PLAN.md", "docs/handoff/handoff.md")
 
-STATE_FILE = "docs/.curation-state.json"
+STATE_FILE = "docs/handoff/.curation-state.json"
 
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 BACKTICK_PATH_RE = re.compile(r"`([^`\s]+\.md)`")
@@ -180,7 +181,7 @@ def classify_layer(rel: str) -> str:
     normalized = rel.replace("\\", "/")
     if normalized == ENTRY_DOC:
         return "L0"
-    if normalized.lower() in L1_PATHS:
+    if normalized.lower() in L1_PATHS_LOWER:
         return "L1"
     return "L2"
 
@@ -292,6 +293,7 @@ def find_duplicates(docs_text, threshold: float):
 # --------------------------------------------------------------------------
 
 def audit(root: Path, args) -> dict:
+    pre_init = getattr(args, "pre_init", False)
     sessions = collect(root, SESSION_GLOBS, apply_exclusions=False)
     session_paths = {p.resolve() for p in sessions}
     # A single-file session log lives inside docs/ and would otherwise be audited
@@ -336,15 +338,15 @@ def audit(root: Path, args) -> dict:
             "path": ENTRY_DOC, "tokens": tok, "budget": args.l0_budget,
             "over": max(0, tok - args.l0_budget),
         })
-    else:
+    elif not pre_init:
         budget_findings.append({"path": ENTRY_DOC, "tokens": None,
                                 "budget": args.l0_budget, "missing": True})
     for rel in REQUIRED_L1_PATHS:
         rec = by_path.get(rel)
-        if rec is None:
+        if rec is None and not pre_init:
             budget_findings.append({"path": rel, "tokens": None,
                                     "budget": args.l1_budget, "missing": True})
-        else:
+        elif rec is not None:
             budget_findings.append({
                 "path": rel, "tokens": rec["tokens"], "budget": args.l1_budget,
                 "over": max(0, rec["tokens"] - args.l1_budget),
@@ -374,8 +376,12 @@ def audit(root: Path, args) -> dict:
         reached.add(node)
         queue.extend(edges.get(node, ()))
 
-    broken = [item for item in broken_candidates if item["from"] in reached]
-    orphans = [rel for rel in texts if rel not in reached and rel != ENTRY_DOC]
+    reachability_deferred = pre_init and ENTRY_DOC not in texts
+    if reachability_deferred:
+        broken, orphans = [], []
+    else:
+        broken = [item for item in broken_candidates if item["from"] in reached]
+        orphans = [rel for rel in texts if rel not in reached and rel != ENTRY_DOC]
 
     # -- staleness -------------------------------------------------------
     stale = [
@@ -402,10 +408,12 @@ def audit(root: Path, args) -> dict:
 
     return {
         "root": str(root),
+        "mode": "pre-init" if pre_init else "normal",
         "docs": records,
         "budget": budget_findings,
         "broken_links": broken,
         "orphans": sorted(orphans),
+        "reachability_deferred": reachability_deferred,
         "stale": sorted(stale, key=lambda s: -s["age_days"]),
         "duplicates": duplicates,
         "sessions": sess,
@@ -419,6 +427,8 @@ def audit(root: Path, args) -> dict:
 
 def report(result: dict, args) -> str:
     out = ["# Documentation Inventory", ""]
+    if result.get("mode") == "pre-init":
+        out += ["Mode: **pre-init** — missing startup and session files are expected.", ""]
     state = result["curation_state"]
     if state and state.get("last_tuned"):
         out.append(f"Last tuned: **{state['last_tuned']}** "
@@ -461,14 +471,18 @@ def report(result: dict, args) -> str:
     out.append("")
 
     out += ["## 3. Reachability", ""]
-    if result["broken_links"]:
+    if result.get("reachability_deferred"):
+        out.append("Deferred until root `AGENTS.md` is created by `session-context-init`.")
+    elif result["broken_links"]:
         out.append("**Broken pointers (fix first):**")
         for b in result["broken_links"]:
             out.append(f"- `{b['from']}` -> `{b['link']}` (target missing)")
     else:
         out.append("No broken pointers.")
     out.append("")
-    if result["orphans"]:
+    if result.get("reachability_deferred"):
+        out.append("No orphan judgment is made in pre-init mode.")
+    elif result["orphans"]:
         out.append("**Unreachable from AGENTS.md:**")
         for o in result["orphans"]:
             out.append(f"- `{o}`")
@@ -502,8 +516,11 @@ def report(result: dict, args) -> str:
     s = result["sessions"]
     out += ["## 6. Session log (L3)", ""]
     if s["files"] == 0:
-        out.append("No session log found. Expected `docs/session-log.md` "
-                   "or `docs/sessions/`.")
+        if result.get("mode") == "pre-init":
+            out.append("No session log expected before `session-context-init` runs.")
+        else:
+            out.append("No session log found. Expected `docs/handoff/session-log.md` "
+                       "or `docs/handoff/sessions/`.")
     else:
         out.append(f"{s['files']} file(s), {s['entries']} session entries, "
                    f"latest session {s['latest'] or '?'}, ~{s['tokens']} tokens.")
@@ -550,7 +567,7 @@ def main() -> int:
     parser.add_argument("--l0-budget", type=int, default=2000,
                         help="token budget for AGENTS.md (default: 2000)")
     parser.add_argument("--l1-budget", type=int, default=1500,
-                        help="token budget for plan.md / handoff.md (default: 1500)")
+                        help="token budget for PLAN.md / handoff.md (default: 1500)")
     parser.add_argument("--stale-days", type=int, default=90,
                         help="flag docs older than this (default: 90)")
     parser.add_argument("--dup-threshold", type=float, default=0.45,
@@ -559,6 +576,8 @@ def main() -> int:
                         help="session context window, for harvest sizing (default: 200000)")
     parser.add_argument("--bootstrap-sessions", type=int, default=5,
                         help="recent sessions to read when no harvest state exists (default: 5)")
+    parser.add_argument("--pre-init", action="store_true",
+                        help="expect startup/session files to be absent before context init")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()

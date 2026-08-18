@@ -32,7 +32,7 @@ Every line competes for the same fixed budget on every session.
 - Architecture prose → `architecture.md`
 - Tutorials or step-by-step procedures → their own doc, or a script
 - Anything already stated in a doc that AGENTS.md points to
-- Status, progress, or current numbers → `plan.md` / `handoff.md`
+- Status, progress, or current numbers → root `PLAN.md` / `docs/handoff/handoff.md`
 - Lists over ~7 items → a reference doc
 
 The status rule matters most in practice: numbers written into AGENTS.md go stale within a
@@ -44,8 +44,8 @@ session or two and then actively mislead, because nothing prompts anyone to upda
 
 ```markdown
 ## Session start
-1. Read `docs/handoff.md` — current position and next action.
-2. Read `plan.md` — milestone status.
+1. Read `docs/handoff/handoff.md` — current position and next action.
+2. Read `PLAN.md` — milestone status.
 3. Consult the pointer table below **before** starting work, not after getting stuck.
 4. At session end, run the `session-handoff` skill.
 ```
@@ -73,7 +73,7 @@ rules file and the line here is its summary.
 | Read this | When |
 |---|---|
 | `docs/architecture.md` | Before changing module boundaries or the data flow |
-| `docs/decisions.md` | Before replacing an algorithm or reversing an earlier approach |
+| `docs/handoff/decisions.md` | Before replacing an algorithm or reversing an earlier approach |
 | `docs/domain/gotchas.md` | When a tool fails in a way its docs don't explain |
 | `docs/reference/params.md` | When you need a settled parameter value |
 ```
