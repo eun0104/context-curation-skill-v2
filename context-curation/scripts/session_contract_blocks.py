@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Check or install context-curation hooks in project-local session skills.
+"""Check or install contract blocks in project-local session skills.
 
 Only the two fixed paths below are inspected or changed:
   .opencode/skills/session-context-init/SKILL.md
   .opencode/skills/session-handoff/SKILL.md
 
 The default mode is read-only. Use --apply only after the corresponding proposal
-item has been approved. Repeated application is idempotent.
+item has been approved. Repeated application is idempotent. Legacy markers that
+used the inaccurate term "hook" are migrated during approved application.
 """
 
 from __future__ import annotations
@@ -19,55 +20,71 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 
-HOOKS = {
+BLOCKS = {
     "session-context-init": {
         "target": ".opencode/skills/session-context-init/SKILL.md",
-        "template": "session-context-init-snippet.md",
+        "template": "session-context-init-contract-block.md",
     },
     "session-handoff": {
         "target": ".opencode/skills/session-handoff/SKILL.md",
-        "template": "session-handoff-snippet.md",
+        "template": "session-handoff-contract-block.md",
     },
 }
 
 FRONTMATTER_RE = re.compile(r"\A---[ \t]*\n.*?\n---[ \t]*\n", re.DOTALL)
 
 
-def read_template(skill_dir: Path, name: str) -> str:
-    path = skill_dir / "integration" / HOOKS[name]["template"]
-    block = path.read_text(encoding="utf-8").strip()
-    start = f"<!-- context-curation:{name}-hook:start -->"
-    end = f"<!-- context-curation:{name}-hook:end -->"
-    if not (block.startswith(start) and block.endswith(end)):
-        raise ValueError(f"Invalid hook template markers: {path}")
-    return block
-
-
 def marker_pair(name: str) -> Tuple[str, str]:
+    return (
+        f"<!-- context-curation:{name}-contract-block:start -->",
+        f"<!-- context-curation:{name}-contract-block:end -->",
+    )
+
+
+def legacy_marker_pair(name: str) -> Tuple[str, str]:
     return (
         f"<!-- context-curation:{name}-hook:start -->",
         f"<!-- context-curation:{name}-hook:end -->",
     )
 
 
+def read_template(skill_dir: Path, name: str) -> str:
+    path = skill_dir / "integration" / BLOCKS[name]["template"]
+    block = path.read_text(encoding="utf-8").strip()
+    start, end = marker_pair(name)
+    if not (block.startswith(start) and block.endswith(end)):
+        raise ValueError(f"Invalid contract-block template markers: {path}")
+    return block
+
+
+def marker_state(text: str, pair: Tuple[str, str]) -> Tuple[int, int]:
+    return text.count(pair[0]), text.count(pair[1])
+
+
 def inspect_target(root: Path, skill_dir: Path, name: str) -> Dict[str, str]:
-    relative = HOOKS[name]["target"]
+    relative = BLOCKS[name]["target"]
     target = root / relative
     if not target.is_file():
         return {"skill": name, "path": relative, "status": "skill-missing"}
 
     text = target.read_text(encoding="utf-8")
-    start, end = marker_pair(name)
-    has_start = start in text
-    has_end = end in text
-    if has_start != has_end:
-        status = "malformed-markers"
-    elif has_start:
+    current = marker_state(text, marker_pair(name))
+    legacy = marker_state(text, legacy_marker_pair(name))
+    counts = current + legacy
+
+    if any(count > 1 for count in counts) or (current == (1, 1) and legacy == (1, 1)):
+        status = "duplicate-block-markers"
+    elif current[0] != current[1] or legacy[0] != legacy[1]:
+        status = "malformed-block-markers"
+    elif current == (1, 1):
+        start, end = marker_pair(name)
         expected = read_template(skill_dir, name)
         installed = text[text.index(start):text.index(end) + len(end)]
         status = "installed" if installed == expected else "outdated"
+    elif legacy == (1, 1):
+        status = "legacy-markers"
     else:
-        status = "hook-missing"
+        status = "block-missing"
     return {"skill": name, "path": relative, "status": status}
 
 
@@ -81,10 +98,17 @@ def insert_after_frontmatter(text: str, block: str) -> str:
     return f"{block}\n\n{body}" if body else f"{block}\n"
 
 
+def replace_marked_block(text: str, pair: Tuple[str, str], block: str) -> str:
+    start, end = pair
+    before = text[:text.index(start)]
+    after = text[text.index(end) + len(end):]
+    return before + block + after
+
+
 def apply_target(root: Path, skill_dir: Path, name: str) -> Dict[str, str]:
     result = inspect_target(root, skill_dir, name)
     status = result["status"]
-    if status in {"skill-missing", "malformed-markers"}:
+    if status in {"skill-missing", "malformed-block-markers", "duplicate-block-markers"}:
         return result
     if status == "installed":
         result["action"] = "unchanged"
@@ -96,10 +120,11 @@ def apply_target(root: Path, skill_dir: Path, name: str) -> Dict[str, str]:
     start, end = marker_pair(name)
 
     if status == "outdated":
-        before = text[:text.index(start)]
-        after = text[text.index(end) + len(end):]
-        updated = before + block + after
+        updated = replace_marked_block(text, (start, end), block)
         action = "updated"
+    elif status == "legacy-markers":
+        updated = replace_marked_block(text, legacy_marker_pair(name), block)
+        action = "migrated-legacy-markers"
     else:
         core = block[len(start):len(block) - len(end)].strip()
         if core in text:
@@ -119,12 +144,12 @@ def run(root: Path, apply: bool = False) -> List[Dict[str, str]]:
     root = root.resolve()
     skill_dir = Path(__file__).resolve().parents[1]
     operation = apply_target if apply else inspect_target
-    return [operation(root, skill_dir, name) for name in HOOKS]
+    return [operation(root, skill_dir, name) for name in BLOCKS]
 
 
 def print_human(results: List[Dict[str, str]], apply: bool) -> None:
     label = "apply" if apply else "check"
-    print(f"Project session hook {label}: .opencode/skills/")
+    print(f"Project session contract-block {label}: .opencode/skills/")
     for item in results:
         suffix = f" ({item['action']})" if "action" in item else ""
         print(f"- {item['skill']}: {item['status']}{suffix} — {item['path']}")
@@ -136,7 +161,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="Install or update hooks. Use only after explicit proposal approval.",
+        help="Install or update contract blocks. Use only after explicit proposal approval.",
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON")
     return parser.parse_args()

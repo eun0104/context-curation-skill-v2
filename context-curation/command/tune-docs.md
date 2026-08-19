@@ -5,7 +5,7 @@ description: Audit and restructure the project's persistent doc layer (AGENTS.md
 Run the `context-curation` skill on this project.
 
 Read `.opencode/skills/context-curation/SKILL.md` (or
-`~/.config/opencode/skill/context-curation/SKILL.md` if installed globally) and follow its
+`~/.config/opencode/skills/context-curation/SKILL.md` if installed globally) and follow its
 run procedure from Step 0.
 
 Two reminders that matter more than the rest:
