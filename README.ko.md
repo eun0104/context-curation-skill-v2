@@ -48,8 +48,8 @@ L0 상한은 지출 한도가 아니라 **형태 강제 장치**입니다. 반�
 
 ```bash
 # 전역 설치 (권장)
-cp -r context-curation ~/.config/opencode/skill/
-cp context-curation/command/tune-docs.md ~/.config/opencode/command/
+cp -r context-curation ~/.config/opencode/skills/
+cp context-curation/command/tune-docs.md ~/.config/opencode/commands/
 
 # 프로젝트 로컬 설치가 필요하면:
 # cp -r context-curation <project>/.opencode/skills/
@@ -57,9 +57,12 @@ cp context-curation/command/tune-docs.md ~/.config/opencode/command/
 
 `context-curation`은 전역으로 두되 `session-context-init`과 `session-handoff`는 프로젝트의
 `.opencode/skills/`로 복사합니다. 초기 계획이 선 뒤 `session-context-init`보다 먼저 curation
-pre-init mode를 실행합니다. 스킬은 고정된 두 로컬 경로에서 contract hook 누락을 감지해 설치를
-제안하며, 첫 승인 실행이 hook과 `docs/handoff/handoff-spec.md`,
+pre-init mode를 실행합니다. 스킬은 고정된 두 로컬 경로에서 contract instruction block 누락을
+감지해 설치를 제안하며, 첫 승인 실행이 해당 블록과 `docs/handoff/handoff-spec.md`,
 `docs/handoff/.curation-state.json`을 적용합니다.
+
+Contract block은 Markdown 지시문이며 deterministic runtime hook이 아닙니다. 이 스킬은 OpenCode
+runtime hook을 설치하지 않습니다.
 
 전체 설치 및 연동 절차는 [`context-curation/INSTALL.md`](context-curation/INSTALL.md),
 실행 계약은 [`context-curation/SKILL.md`](context-curation/SKILL.md)를 참고하세요.
@@ -79,9 +82,9 @@ pre-init mode를 실행합니다. 스킬은 고정된 두 로컬 경로에서 co
 
    또는 `context-curation을 pre-init mode로 실행해서 이 프로젝트의 메모리 계약을 설계해줘.`라고
    요청합니다.
-4. `docs/_tuning-proposal.md`를 읽습니다. 누락되거나 오래된 session hook은 blocking 항목으로
-   나타납니다. 항목 ID별로 승인하거나 거부하며, 승인 전에는 지속 프로젝트 파일을 변경하지
-   않습니다.
+4. `docs/_tuning-proposal.md`를 읽습니다. 누락되거나 오래된 session contract block은 blocking
+   항목으로 나타납니다. 항목 ID별로 승인하거나 거부하며, 승인 전에는 지속 프로젝트 파일을
+   변경하지 않습니다.
 5. 승인 항목이 적용된 다음 `session-context-init`을 실행합니다. 루트 `AGENTS.md`, 루트
    `PLAN.md`와 `docs/handoff/` 아래의 계약된 파일이 생성됩니다.
 
@@ -109,7 +112,7 @@ context-curation/
 ├── INSTALL.md                     # 설치 및 기존 스킬 연동
 ├── command/tune-docs.md           # 명시 호출용 슬래시 커맨드
 ├── scripts/docs_inventory.py      # 구조 감사 (표준 라이브러리만, 네트워크 없음)
-├── scripts/session_skill_hooks.py # 프로젝트 로컬 session hook 점검/승인 적용
+├── scripts/session_contract_blocks.py  # 프로젝트 로컬 contract block 점검/승인 적용
 ├── references/
 │   ├── promotion-test.md          # 승격 4기준과 예시
 │   ├── routing-table.md           # 목적지 결정과 문서 포맷
@@ -118,10 +121,11 @@ context-curation/
 │   └── profiles/
 │       └── physics-modeling.md    # 물리 모델링·데이터 피팅 프로젝트용 프로파일
 ├── templates/                     # 새 문서 생성용 템플릿
-└── integration/                   # 프로젝트 로컬 init/handoff 연동 스니펫
+└── integration/                   # 프로젝트 로컬 init/handoff 연동 블록
 
 tests/
 ├── test_docs_inventory.py         # 표준 라이브러리 회귀 테스트
+├── test_session_contract_blocks.py  # contract block 회귀 테스트
 └── fixtures/bootstrap-project/    # 익명 forward-test 프로젝트
 ```
 
@@ -157,11 +161,11 @@ python context-curation/scripts/docs_inventory.py --root /path/to/project
 # session-context-init 실행 전
 # python context-curation/scripts/docs_inventory.py --root /path/to/project --pre-init
 
-# 고정된 프로젝트 로컬 session skill hook 점검 (기본은 읽기 전용)
-# python context-curation/scripts/session_skill_hooks.py --root /path/to/project
+# 고정된 프로젝트 로컬 session skill contract block 점검 (기본은 읽기 전용)
+# python context-curation/scripts/session_contract_blocks.py --root /path/to/project
 
 # 전역 설치본
-# python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root /path/to/project
+# python ~/.config/opencode/skills/context-curation/scripts/docs_inventory.py --root /path/to/project
 ```
 
 감사기는 다음을 보고합니다.
@@ -185,8 +189,8 @@ python -m unittest discover -s tests -v
 ```
 
 현재 pre-init 생명주기, handoff 하위 경로, bootstrap 범위, 도달성, freshness, curation state
-탐색, 복수형 프로젝트 스킬 경로, 승인된 hook 삽입과 멱등성을 포함한 회귀 테스트 15개가
-통과합니다.
+탐색, 복수형 프로젝트 스킬 경로, 승인된 contract block 삽입, 구형 마커 이관과 멱등성을
+포함한 회귀 테스트 16개가 통과합니다.
 
 ## 라이선스
 

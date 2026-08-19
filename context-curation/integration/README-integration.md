@@ -40,9 +40,10 @@ Keep shared copies as upstream templates, but run pinned copies from `.opencode/
 project. This makes path and field changes visible in the project's history and prevents one
 project's needs from leaking into another.
 
-`scripts/session_skill_hooks.py` checks these exact paths without writing. During the approved
-apply pass, run it with `--apply` to install or refresh the marked blocks from the two snippet
-files. Repeated application is idempotent, and the script never falls back to a global skill.
+`scripts/session_contract_blocks.py` checks these exact paths without writing. During the approved
+apply pass, run it with `--apply` to install or refresh the marked blocks from the two contract-block
+files. Repeated application is idempotent, legacy `hook` markers are migrated, and the script never
+falls back to a global skill. These are Markdown instruction blocks, not OpenCode runtime hooks.
 
 Keep `handoff-spec.md` even with local skills. The spec is declarative and shared by init and
 handoff; editing both procedural SKILL.md files for every schema change would create two sources

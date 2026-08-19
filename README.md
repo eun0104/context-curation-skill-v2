@@ -53,8 +53,8 @@ changes.
 
 ```bash
 # Global installation (recommended)
-cp -r context-curation ~/.config/opencode/skill/
-cp context-curation/command/tune-docs.md ~/.config/opencode/command/
+cp -r context-curation ~/.config/opencode/skills/
+cp context-curation/command/tune-docs.md ~/.config/opencode/commands/
 
 # For a project-local installation:
 # cp -r context-curation <project>/.opencode/skills/
@@ -62,9 +62,13 @@ cp context-curation/command/tune-docs.md ~/.config/opencode/command/
 
 Keep `context-curation` global, but copy `session-context-init` and `session-handoff` into the
 project's `.opencode/skills/` directory. Run curation in pre-init mode after the initial project
-plan is clear and before running `session-context-init`. It detects missing contract hooks at the
-two fixed local paths and proposes their installation; the first approved run installs them and
-creates `docs/handoff/handoff-spec.md` and `docs/handoff/.curation-state.json`.
+plan is clear and before running `session-context-init`. It detects missing contract instruction
+blocks at the two fixed local paths and proposes their installation; the first approved run
+installs them and creates `docs/handoff/handoff-spec.md` and
+`docs/handoff/.curation-state.json`.
+
+Contract blocks are Markdown instructions, not deterministic runtime hooks. This skill does not
+install an OpenCode runtime hook.
 
 See [`context-curation/INSTALL.md`](context-curation/INSTALL.md) for the complete installation and
 integration guide (Korean), and [`context-curation/SKILL.md`](context-curation/SKILL.md) for the
@@ -84,7 +88,8 @@ agent execution contract.
    ```
 
    Or ask: `Use context-curation in pre-init mode to design this project's memory contract.`
-4. Review `docs/_tuning-proposal.md`. Missing or stale session hooks appear as blocking items.
+4. Review `docs/_tuning-proposal.md`. Missing or stale session contract blocks appear as blocking
+   items.
    Approve or reject items by ID; no persistent project file is changed before approval.
 5. After the approved items are applied, run `session-context-init`. It creates root `AGENTS.md`,
    root `PLAN.md`, and the files declared under `docs/handoff/`.
@@ -115,7 +120,7 @@ context-curation/
 ├── INSTALL.md                     # Installation and integration guide (Korean)
 ├── command/tune-docs.md           # Slash command for explicit invocation
 ├── scripts/docs_inventory.py      # Structural audit; standard library only, no network
-├── scripts/session_skill_hooks.py # Check/install approved project-local session hooks
+├── scripts/session_contract_blocks.py  # Check/install project-local contract blocks
 ├── references/
 │   ├── promotion-test.md          # Four promotion criteria and examples
 │   ├── routing-table.md           # Destination selection and document formats
@@ -124,10 +129,11 @@ context-curation/
 │   └── profiles/
 │       └── physics-modeling.md    # Profile for physics modeling and data fitting
 ├── templates/                     # Templates for new documents
-└── integration/                   # Project-local init and handoff integration snippets
+└── integration/                   # Project-local init and handoff integration blocks
 
 tests/
 ├── test_docs_inventory.py         # Standard-library regression tests
+├── test_session_contract_blocks.py  # Contract-block regression tests
 └── fixtures/bootstrap-project/    # Anonymous forward-test project
 ```
 
@@ -166,11 +172,11 @@ python context-curation/scripts/docs_inventory.py --root /path/to/project
 # Before session-context-init
 # python context-curation/scripts/docs_inventory.py --root /path/to/project --pre-init
 
-# Check fixed project-local session skill hooks (read-only by default)
-# python context-curation/scripts/session_skill_hooks.py --root /path/to/project
+# Check fixed project-local session skill contract blocks (read-only by default)
+# python context-curation/scripts/session_contract_blocks.py --root /path/to/project
 
 # From a global installation
-# python ~/.config/opencode/skill/context-curation/scripts/docs_inventory.py --root /path/to/project
+# python ~/.config/opencode/skills/context-curation/scripts/docs_inventory.py --root /path/to/project
 ```
 
 The audit reports:
@@ -195,9 +201,9 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All fifteen current regression tests pass, covering the pre-init lifecycle, nested handoff paths,
+All sixteen current regression tests pass, covering the pre-init lifecycle, nested handoff paths,
 bootstrap scope, reachability, freshness, curation-state discovery, plural project skill paths,
-approved hook insertion, and idempotence.
+approved contract-block insertion, legacy-marker migration, and idempotence.
 
 ## License
 

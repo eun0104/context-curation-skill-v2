@@ -12,8 +12,8 @@ and what does this proposal do about it.>
 
 ## A. Blocking — apply first
 
-Missing or stale project-local session hooks belong here. State that approved application runs
-`scripts/session_skill_hooks.py --root . --apply` against `.opencode/skills/` only.
+Missing or stale project-local session contract blocks belong here. State that approved application
+runs `scripts/session_contract_blocks.py --root . --apply` against `.opencode/skills/` only.
 
 ### A1. <Short title>
 - **Finding:** <what the audit found>

@@ -121,10 +121,11 @@ approximate with `wc -l` and `grep -rn "docs/" AGENTS.md`.
 Then check the two fixed project-local session skill paths:
 
 ```bash
-python <skill-dir>/scripts/session_skill_hooks.py --root .
+python <skill-dir>/scripts/session_contract_blocks.py --root .
 ```
 
-This check is read-only. `skill-missing`, `hook-missing`, `outdated`, or `malformed-markers` must
+This check is read-only. `skill-missing`, `block-missing`, `legacy-markers`, `outdated`,
+`malformed-block-markers`, or `duplicate-block-markers` must
 become a blocking proposal item. Do not inspect or modify a global session skill as a substitute.
 
 For how to fix each finding, read `references/audit-checks.md` now.
@@ -263,10 +264,11 @@ item, ask whether the underlying rule should change — pushback usually general
 
 Only after approval, in this order:
 
-1. If a session-hook blocking item was approved, run
-   `python <skill-dir>/scripts/session_skill_hooks.py --root . --apply`. It changes only the two
-   known project-local SKILL.md files and is idempotent. Resolve missing skills or malformed
-   markers manually rather than writing elsewhere.
+1. If a session contract-block blocking item was approved, run
+   `python <skill-dir>/scripts/session_contract_blocks.py --root . --apply`. It changes only the
+   two known project-local SKILL.md files and is idempotent. Approved application migrates markers
+   that used the inaccurate term `hook`. Resolve missing skills or malformed markers manually
+   rather than writing elsewhere.
 2. Create or edit the destination docs, using `templates/` for new files.
 3. Update the AGENTS.md pointer table. Every new L2 doc needs a trigger condition phrased as a
    situation the agent will recognise itself to be in — "when working on this project" is not
@@ -299,8 +301,9 @@ else. Restructuring is exactly when contradictions get introduced — a fact mov
 while an old summary of it survives elsewhere — and it is much cheaper to catch here than three
 sessions later when a session has already acted on the wrong copy.
 
-In pre-init mode, rerun with `--pre-init`, verify the spec and both local hooks instead of absent
-startup files, rerun `session_skill_hooks.py --root .` and require both statuses to be `installed`,
+In pre-init mode, rerun with `--pre-init`, verify the spec and both local contract blocks instead
+of absent startup files, rerun `session_contract_blocks.py --root .` and require both statuses to
+be `installed`,
 then instruct the user to run `session-context-init`. Perform the normal AGENTS.md and PLAN.md
 checks after init creates them.
 
@@ -327,10 +330,11 @@ contract that prevents init and handoff from drifting apart. Edit a local SKILL.
 change cannot be represented in the spec; record generalizable improvements for the shared
 upstream in section G.
 
-Both project-local session skills must read `docs/handoff/handoff-spec.md`. Install those hooks
-during the first approved pre-init curation. If either local skill or hook is missing, make fixing
-the project-local copy a blocking proposal item; do not silently continue with two different path
-contracts. Use `scripts/session_skill_hooks.py` so detection and insertion use the same markers.
+Both project-local session skills must read `docs/handoff/handoff-spec.md`. Install those contract
+blocks during the first approved pre-init curation. If either local skill or block is missing, make
+fixing the project-local copy a blocking proposal item; do not silently continue with two different
+path contracts. Use `scripts/session_contract_blocks.py` so detection and insertion use the same markers.
+These blocks are Markdown instructions, not deterministic runtime hooks.
 
 ### When a finding generalizes
 
@@ -399,5 +403,5 @@ fact belongs in the persistent layer and is not there.
 | `templates/handoff-spec.md` | When changing what handoff captures |
 | `templates/*.md` | Step 6 — creating a new persistent doc |
 | `scripts/docs_inventory.py` | Step 1 — run it, no need to read it |
-| `scripts/session_skill_hooks.py` | Steps 1, 6, and 7 — check, apply after approval, verify |
+| `scripts/session_contract_blocks.py` | Steps 1, 6, and 7 — check, apply after approval, verify |
 | `integration/` | First-time setup only |

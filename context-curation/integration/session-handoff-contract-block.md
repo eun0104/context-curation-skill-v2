@@ -1,4 +1,4 @@
-<!-- context-curation:session-handoff-hook:start -->
+<!-- context-curation:session-handoff-contract-block:start -->
 ## Project memory contract
 
 Read `docs/handoff/handoff-spec.md` before writing any session state. Follow its document paths,
@@ -7,4 +7,4 @@ cadences, handoff fields, and session-log entry format. It overrides this skill'
 The spec is maintained by `context-curation`. Do not edit it during routine handoff. If it is
 missing after initialization, stop and report the broken project setup instead of falling back to
 a different path layout.
-<!-- context-curation:session-handoff-hook:end -->
+<!-- context-curation:session-handoff-contract-block:end -->
