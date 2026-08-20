@@ -46,20 +46,51 @@ L0 상한은 지출 한도가 아니라 **형태 강제 장치**입니다. 반�
 
 ## 설치
 
-```bash
-# 전역 설치 (권장)
-cp -r context-curation ~/.config/opencode/skills/
-cp context-curation/command/tune-docs.md ~/.config/opencode/commands/
+설치 범위 하나를 선택합니다. OpenCode는 전역 스킬과 프로젝트 로컬 스킬을 모두 지원합니다.
 
-# 프로젝트 로컬 설치가 필요하면:
-# cp -r context-curation <project>/.opencode/skills/
+**전역 — 여러 프로젝트에서 한 사본을 공용으로 사용:**
+
+```bash
+mkdir -p ~/.config/opencode/skills ~/.config/opencode/commands
+cp -r context-curation ~/.config/opencode/skills/
+
+# 선택: 모든 프로젝트에서 명시 호출할 /tune-docs 명령
+cp context-curation/command/tune-docs.md ~/.config/opencode/commands/
 ```
 
-`context-curation`은 전역으로 두되 `session-context-init`과 `session-handoff`는 프로젝트의
+**프로젝트 로컬 — 한 프로젝트에 버전을 고정하고 함께 검토:**
+
+```bash
+PROJECT_DIR=/path/to/project
+mkdir -p "$PROJECT_DIR/.opencode/skills" "$PROJECT_DIR/.opencode/commands"
+cp -r context-curation "$PROJECT_DIR/.opencode/skills/"
+
+# 선택: 이 프로젝트에서만 명시 호출할 /tune-docs 명령
+cp "$PROJECT_DIR/.opencode/skills/context-curation/command/tune-docs.md" \
+   "$PROJECT_DIR/.opencode/commands/tune-docs.md"
+```
+
+스킬 폴더를 복사하면 설치는 끝납니다. 사용자가 `integration/`이나 `templates/`의 개별 파일을
+열거나 수동 적용할 필요가 없습니다. command 복사는 선택 사항이며 스킬 이름으로 항상 명시
+호출할 수 있습니다. 설치하거나 스킬·command를 바꾼 뒤에는 OpenCode를 재시작해 탐색 상태를
+갱신합니다.
+
+두 범위에 같은 이름의 `context-curation`이 모두 있으면 프로젝트 로컬 사본을 의도적인
+오버라이드로 취급합니다. 프로젝트를 일부러 특정 버전에 고정한 경우가 아니면 두 사본의 버전을
+맞추고, 첫 실행에서 실제로 로드된 스킬 기준 디렉터리를 확인합니다. 사용 중인 OpenCode/Oh My
+OpenCode 조합이 한 사본을 선택하지 않고 둘 다 노출한다면 모호한 선택에 기대지 말고 의도하지
+않은 사본을 제거합니다. 한 번의 실행은 로드된 한 사본의 스크립트·템플릿·참조 파일만 사용합니다.
+
+`context-curation`의 설치 범위와 관계없이 `session-context-init`과 `session-handoff`는 프로젝트의
 `.opencode/skills/`로 복사합니다. 초기 계획이 선 뒤 `session-context-init`보다 먼저 curation
-pre-init mode를 실행합니다. 스킬은 고정된 두 로컬 경로에서 contract instruction block 누락을
-감지해 설치를 제안하며, 첫 승인 실행이 해당 블록과 `docs/handoff/handoff-spec.md`,
-`docs/handoff/.curation-state.json`을 적용합니다.
+스킬을 명시 호출합니다. 스킬이 lifecycle을 자동 판정하므로 프롬프트에 `pre-init`을 쓸 필요가
+없습니다. 고정된 두 로컬 경로에서 contract instruction block 누락을 감지해 설치를 제안하며,
+첫 승인 실행이 해당 블록과 `docs/handoff/handoff-spec.md`, 상태 파일을 적용합니다.
+
+Spec에는 승인 기반 Git checkpoint 정책도 들어갑니다. `session-context-init`은 Git 저장소가
+없으면 `git init`을 제안하고, `session-handoff`는 매 세션 종료 때 미커밋 작업을 확인해 checkpoint
+commit을 제안합니다. 사용자가 정확한 작업·경로·커밋 메시지를 승인해야만 실행하며, 브랜치 변경,
+push, merge, rebase, reset, stash는 자동화하지 않습니다.
 
 Contract block은 Markdown 지시문이며 deterministic runtime hook이 아닙니다. 이 스킬은 OpenCode
 runtime hook을 설치하지 않습니다.
@@ -74,19 +105,21 @@ runtime hook을 설치하지 않습니다.
 1. 프로젝트 초기 구상과 대략적인 계획을 세웁니다.
 2. 프로젝트 로컬 `session-context-init`, `session-handoff` 사본을 `.opencode/skills/` 아래에
    설치합니다.
-3. context init을 실행하기 전에 curation을 명시적으로 호출합니다.
+3. context init을 실행하기 전에 curation을 명시적으로 호출합니다. 프로젝트 상태에서 pre-init을
+   자동 판정합니다.
 
    ```text
-   /tune-docs pre-init
+   /tune-docs
    ```
 
-   또는 `context-curation을 pre-init mode로 실행해서 이 프로젝트의 메모리 계약을 설계해줘.`라고
-   요청합니다.
+   또는 `이 프로젝트에서 context-curation 스킬을 실행해줘.`라고 요청합니다.
 4. `docs/_tuning-proposal.md`를 읽습니다. 누락되거나 오래된 session contract block은 blocking
    항목으로 나타납니다. 항목 ID별로 승인하거나 거부하며, 승인 전에는 지속 프로젝트 파일을
    변경하지 않습니다.
 5. 승인 항목이 적용된 다음 `session-context-init`을 실행합니다. 루트 `AGENTS.md`, 루트
-   `PLAN.md`와 `docs/handoff/` 아래의 계약된 파일이 생성됩니다.
+   `PLAN.md`와 `docs/handoff/` 아래의 계약된 파일이 생성됩니다. AGENTS.md의 curation 포인터와
+   L0 예산 마커는 spec에서 공급되므로 별도 snippet을 적용하지 않습니다. 프로젝트가 Git
+   저장소가 아니면 init이 `git init` 실행 전에 묻고, 파일 생성 후 첫 checkpoint를 제안합니다.
 
 ### 주기적 튜닝
 
@@ -100,6 +133,13 @@ runtime hook을 설치하지 않습니다.
 스킬은 감사와 증거 수확을 수행하고 `docs/_tuning-proposal.md`를 작성한 뒤 멈춥니다. 제안서를
 항목별로 검토하며 승인된 항목만 적용됩니다. 대표적인 실행 시점은 마지막 튜닝 이후 5세션 이상,
 마일스톤 종료, 문서 drift, 비대해진 AGENTS.md 또는 반복되는 에이전트 실수입니다.
+
+### 세션 종료 Git checkpoint
+
+`session-handoff`는 handoff 문서를 쓴 다음 읽기 전용 Git 상태 검사를 실행합니다. 미커밋 작업이
+있으면 기존 staged 작업을 따로 보여주고, 정확한 대상 경로와 메시지를 제안한 뒤 커밋 여부를
+묻습니다. `git add -A` 같은 광범위한 staging은 사용하지 않으며, 거절해도 handoff는 정상적으로
+끝납니다.
 
 감사 명령만 필요하면 [감사 스크립트](#감사-스크립트)를, 상세 설치·운영 설정·문제 해결은
 [`context-curation/INSTALL.md`](context-curation/INSTALL.md)를 참고하세요.
@@ -138,6 +178,10 @@ tests/
 고정한 사본을 사용합니다. 로컬이어도 선언적 handoff spec을 유지해 init과 handoff의 계약이
 갈라지지 않게 합니다.
 
+**Git checkpoint는 제안하고 Git workflow는 자동화하지 않음.** Init은 저장소 초기화를,
+handoff는 좁은 범위의 checkpoint commit을 제안할 수 있습니다. 둘 다 명시 승인이 필요하며,
+브랜치와 원격 작업은 별도 사용자 요청으로 남깁니다.
+
 **지속 문서 삭제 없음.** `docs/archive/`로 이동하고 무엇이 대체했는지 남깁니다.
 검토용 임시 파일인 `docs/_tuning-proposal.md`만 승인된 적용이 끝난 뒤 제거합니다.
 
@@ -158,8 +202,9 @@ curation 상태와 handoff control spec은 이 제한에 포함하지 않습니�
 # 저장소에서 직접
 python context-curation/scripts/docs_inventory.py --root /path/to/project
 
-# session-context-init 실행 전
+# lifecycle은 자동 판정; 아래 flag는 ambiguous 상태를 해소한 뒤에만 사용
 # python context-curation/scripts/docs_inventory.py --root /path/to/project --pre-init
+# python context-curation/scripts/docs_inventory.py --root /path/to/project --normal
 
 # 고정된 프로젝트 로컬 session skill contract block 점검 (기본은 읽기 전용)
 # python context-curation/scripts/session_contract_blocks.py --root /path/to/project
@@ -188,9 +233,10 @@ README는 조건부 문서인 L2로 취급하며, 파일명이 README라는 이�
 python -m unittest discover -s tests -v
 ```
 
-현재 pre-init 생명주기, handoff 하위 경로, bootstrap 범위, 도달성, freshness, curation state
-탐색, 복수형 프로젝트 스킬 경로, 승인된 contract block 삽입, 구형 마커 이관과 멱등성을
-포함한 회귀 테스트 16개가 통과합니다.
+현재 자동 lifecycle 판정, 모순된 startup 증거, AGENTS.md 초기 라우팅, handoff 하위 경로,
+bootstrap 범위, 도달성, freshness, curation state 탐색, 복수형 프로젝트 스킬 경로, 승인된
+contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드와
+멱등성을 포함한 회귀 테스트 21개가 통과합니다.
 
 ## 라이선스
 

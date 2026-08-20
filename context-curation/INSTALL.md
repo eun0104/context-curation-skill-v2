@@ -8,34 +8,59 @@
 이 환경에서는 프로젝트 스킬을 항상 루트의 **복수형** `.opencode/skills/` 아래에 둡니다.
 전역 설치 경로도 OpenCode 1.x의 복수형 `~/.config/opencode/skills/`를 사용합니다.
 
-**프로젝트 전용:**
-```
-<프로젝트>/.opencode/skills/context-curation/
-```
+다음 중 한 범위를 선택합니다.
 
-**모든 프로젝트에서 공용 (권장):**
-```
-~/.config/opencode/skills/context-curation/
-```
+| 범위 | 설치 경로 | 적합한 경우 |
+|---|---|---|
+| 전역 | `~/.config/opencode/skills/context-curation/` | 여러 프로젝트에서 한 사본을 공용으로 업데이트 |
+| 프로젝트 로컬 | `<프로젝트>/.opencode/skills/context-curation/` | 저장소와 함께 버전을 고정·검토하거나 프로젝트별로 실험 |
 
-이 스킬은 프로젝트마다 다시 만들 이유가 없으므로 전역 설치가 낫습니다.
-압축을 풀어 폴더째로 복사하면 끝입니다.
+**전역 설치:**
 
 ```bash
-unzip context-curation.zip -d ~/.config/opencode/skills/
-opencode
-```
+mkdir -p ~/.config/opencode/skills ~/.config/opencode/commands
+cp -r context-curation ~/.config/opencode/skills/
 
-설치 확인은 새 세션에서 `/skills` 또는 에이전트에게 "context-curation 스킬 있어?"로 하면 됩니다.
-
-### 슬래시 커맨드도 같이 설치 (GLM 5.2 환경에서는 권장)
-
-`command/tune-docs.md`를 커맨드 디렉토리에 복사하면 `/tune-docs`로 명시 호출할 수 있습니다.
-
-```bash
+# 선택: 모든 프로젝트에서 명시 호출할 /tune-docs 명령
 cp ~/.config/opencode/skills/context-curation/command/tune-docs.md \
    ~/.config/opencode/commands/tune-docs.md
 ```
+
+**프로젝트 로컬 설치:**
+
+```bash
+PROJECT_DIR=/path/to/project
+mkdir -p "$PROJECT_DIR/.opencode/skills" "$PROJECT_DIR/.opencode/commands"
+cp -r context-curation "$PROJECT_DIR/.opencode/skills/"
+
+# 선택: 이 프로젝트에서만 명시 호출할 /tune-docs 명령
+cp "$PROJECT_DIR/.opencode/skills/context-curation/command/tune-docs.md" \
+   "$PROJECT_DIR/.opencode/commands/tune-docs.md"
+```
+
+스킬 폴더 복사만으로 스킬 설치는 끝입니다. `integration/`이나 `templates/`의 개별 파일을 사용자나
+coding agent에게 따로 읽힐 필요가 없습니다. command 복사는 선택 사항입니다. 설치하거나 스킬·
+command를 변경한 뒤에는 OpenCode를 재시작하고, `/skills` 또는 에이전트에게
+"context-curation 스킬 있어?"라고 물어 탐색 여부를 확인합니다.
+
+### 두 범위에 모두 설치한 경우
+
+같은 이름의 프로젝트 로컬 사본은 전역 사본에 대한 **의도적인 오버라이드**로만 사용합니다.
+프로젝트를 특정 버전에 고정하려는 목적이 아니라면 두 사본의 버전을 맞추세요. 첫 실행에서는
+에이전트가 보고하는 loaded skill base directory가 `.opencode/skills/context-curation/`인지
+`~/.config/opencode/skills/context-curation/`인지 확인합니다. 사용 중인 OpenCode 1.x와 Oh My
+OpenCode 조합이 한 사본을 선택하지 않고 둘 다 노출한다면, 의도하지 않은 사본을 제거해 선택을
+명확하게 합니다.
+
+스킬은 실제로 로드한 `SKILL.md`의 디렉터리를 `<skill-dir>`로 삼고 그 사본 아래의 `scripts/`,
+`templates/`, `references/`, `integration/`만 사용합니다. 전역 스크립트와 로컬 템플릿처럼 서로
+다른 사본의 리소스를 섞어서는 안 됩니다.
+
+### 슬래시 커맨드 설치 (선택, GLM 5.2 환경에서는 권장)
+
+위 설치 예시처럼 선택한 범위의 `command/tune-docs.md`를 같은 범위의 command 디렉터리에
+복사하면 `/tune-docs`로 명시 호출할 수 있습니다. 전역 스킬에는 전역 command를, 프로젝트 로컬
+스킬에는 프로젝트 로컬 command를 짝지어 버전이 엇갈리지 않게 합니다.
 
 스킬 자동 트리거는 모델이 description을 보고 "이 스킬을 읽어야겠다"고 판단해야 작동합니다.
 Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가 큽니다. 명시 커맨드가 있으면
@@ -60,38 +85,65 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
     └── .curation-state.json          ← context-curation 이 관리
 ```
 
-`context-curation`은 전역 설치를 유지하되, `session-context-init`과 `session-handoff`는 공유
-원본을 프로젝트의 `.opencode/skills/`로 복사해 고정해서 사용합니다. 두 로컬 스킬의 upstream
-버전이나 복사 날짜를 기록해 두세요.
+`context-curation`은 위에서 선택한 전역 또는 프로젝트 로컬 범위에 설치합니다. 그 범위와
+관계없이 `session-context-init`과 `session-handoff`는 공유 원본을 프로젝트의
+`.opencode/skills/`로 복사해 고정해서 사용합니다. 두 로컬 스킬의 upstream 버전이나 복사 날짜를
+기록해 두세요.
 
-`integration/` 폴더에는 두 session 스킬용 contract instruction block, AGENTS.md 조각과 설명
-문서가 있습니다. 여기서 contract block은 Markdown 지시문이며 OpenCode runtime hook이 아닙니다.
+`integration/` 폴더에는 두 session 스킬용 contract instruction block과 설명 문서가 있습니다.
+여기서 contract block은 Markdown 지시문이며 OpenCode runtime hook이 아닙니다. 사용자가 이
+폴더의 파일을 수동으로 적용하지 않습니다. 첫 curation 실행이 승인된 변경만 적용합니다.
 
 1. **`session-context-init-contract-block.md`** — 로컬 init 스킬이 실행 전에
    `docs/handoff/handoff-spec.md`를 요구하고, 루트 `AGENTS.md`·`PLAN.md`와 handoff 하위 파일을
-   올바른 위치에 만들게 하는 정본 contract block입니다.
+   올바른 위치에 만들며 Git 저장소 누락을 알리게 하는 정본 contract block입니다.
 2. **`session-handoff-contract-block.md`** — 로컬 handoff 스킬이 같은 spec을 읽고 쓰기 경로·
-   주기·필드를 따르게 하는 정본 contract block입니다.
-3. **`agents-md-snippet.md`** — 생성된 AGENTS.md의 포인터 표에 한 줄을 추가합니다.
-   자동 트리거가 불안정해도 5세션 주기와 문서 이상 징후를 인식하게 합니다.
-4. **`README-integration.md`** — pre-init부터 주기적 tuning까지 전체 관계를
+   주기·필드와 세션 종료 Git checkpoint 정책을 따르게 하는 정본 contract block입니다.
+3. **`README-integration.md`** — 자동 lifecycle 판정부터 주기적 tuning까지 전체 관계를
    설명합니다. 설치 대상은 아닙니다.
+
+AGENTS.md에 필요한 curation 포인터와 L0 예산 마커, 승인 기반 Git checkpoint 정책은
+`templates/handoff-spec.md`에 들어 있습니다. Pre-init curation이 이 계약을 프로젝트 spec에
+포함하고, 두 session 스킬이 각 실행 시점에 적용합니다.
 
 ### 첫 프로젝트 실행 순서
 
 1. 프로젝트 초기 구상과 대략적인 계획을 세웁니다.
 2. 두 session 스킬을 프로젝트의 `.opencode/skills/`로 복사합니다.
-3. `context-curation`을 pre-init mode로 실행합니다. Contract-block 검사 결과 누락·구버전이면
-   제안서의 blocking 항목으로 나타납니다.
+3. `context-curation`을 명시적으로 호출합니다. `/tune-docs` 또는
+   `context-curation 스킬을 실행해줘`면 충분합니다. 스킬이 프로젝트 증거를 검사해 초기화
+   전이면 자동으로 pre-init lifecycle을 선택합니다. `pre-init`을 프롬프트에 쓸 필요가 없습니다.
+   Contract-block 검사 결과 누락·구버전이면 제안서의 blocking 항목으로 나타납니다.
 4. 승인 후 contract block과 `docs/handoff/handoff-spec.md`, 상태 파일을 적용합니다.
-5. 그다음 `session-context-init`을 실행합니다.
+5. 그다음 `session-context-init`을 실행합니다. 생성된 AGENTS.md에는 spec이 선언한 curation
+   포인터와 L0 예산 마커가 포함됩니다. Git 저장소가 아니면 `git init` 실행 여부를 묻고,
+   초기화 파일을 쓴 뒤 첫 checkpoint commit을 제안합니다.
 
-Init보다 먼저 실행하는 감사 명령은 `--pre-init`을 사용합니다. 이 모드에서는 아직 없는
-AGENTS.md, PLAN.md와 session log를 오류로 보고하지 않습니다.
+### Git 초기화와 세션 checkpoint
+
+첫 curation이 만드는 handoff spec에는 `Git checkpoint policy`가 포함됩니다. 이후 두 프로젝트
+로컬 session 스킬은 다음처럼 동작합니다.
+
+1. `session-context-init`은 Git 저장소가 없을 때만 `git init`을 제안합니다.
+2. `session-context-init`의 파일 생성 후와 매 `session-handoff` 종료 때 읽기 전용 Git 상태를
+   확인합니다.
+3. 변경이 있으면 기존 staged 작업을 따로 보여주고, checkpoint 대상 경로와 메시지를 제안합니다.
+4. 사용자가 정확한 작업·경로·메시지를 승인한 뒤에만 literal path를 stage하고 commit합니다.
+5. `git add -A`, `git add .`, wildcard staging과 branch 변경, push, merge, rebase, reset, stash,
+   amend는 이 정책에서 실행하지 않습니다.
+
+Git 초기화나 checkpoint를 거절해도 init 또는 handoff는 실패하지 않습니다. 미커밋 경로만
+보고하고 다음 세션이 알 수 있도록 필요한 경우 handoff의 `In flight`에 남깁니다.
+
+스킬은 내부적으로 다음 감사 명령을 mode flag 없이 실행합니다.
 
 ```bash
-python ~/.config/opencode/skills/context-curation/scripts/docs_inventory.py --root . --pre-init
+python ~/.config/opencode/skills/context-curation/scripts/docs_inventory.py --root .
 ```
+
+감사기는 startup 파일과 session 증거로 `pre-init` 또는 `normal`을 자동 판정합니다. 일부 startup
+파일만 있거나 과거 session 증거와 충돌하면 `ambiguous`로 중단합니다. 이때 사용자에게 실제
+초기화 상태를 확인한 뒤에만 `--pre-init` 또는 `--normal`로 명시 재실행합니다.
 
 두 session contract block만 별도로 점검할 수도 있습니다. 기본 동작은 읽기 전용입니다.
 
@@ -173,7 +225,9 @@ Python 3.8 이상이면 됩니다. 환경에서 실행 파일 이름이 `python3
 | `--dup-threshold` | 0.45 | 문단 중복 판정 유사도 (0~1) |
 | `--context-window` | 200000 | 수확 범위를 계산할 컨텍스트 크기 |
 | `--bootstrap-sessions` | 5 | 상태 파일이 없을 때 본문을 읽을 최근 세션 수 |
-| `--pre-init` | 꺼짐 | init 전 누락 startup/session 파일을 정상으로 처리 |
+| lifecycle mode | 자동 | startup 파일과 session 증거에서 `pre-init` / `normal` / `ambiguous` 판정 |
+| `--pre-init` | | 사용자가 ambiguity를 해소한 뒤 pre-init을 강제 |
+| `--normal` | | 사용자가 ambiguity를 해소한 뒤 normal을 강제 |
 | `--json` | | 사람 대신 에이전트가 읽을 형식 |
 
 토큰 수치는 문자 수 기반 **추정치**입니다(한글은 1.5자/토큰, ASCII는 4자/토큰 가정).
@@ -204,8 +258,15 @@ Python 3.8 이상이면 됩니다. 환경에서 실행 파일 이름이 `python3
 
 | 증상 | 확인할 것 |
 |---|---|
-| `/tune-docs`가 없음 | `command/tune-docs.md`를 `~/.config/opencode/commands/`에 복사했는지 확인 |
-| 자동 호출이 안 됨 | AGENTS.md에 `integration/agents-md-snippet.md`를 추가했는지 확인 |
+| `/tune-docs`가 없음 | 선택한 범위의 `command/tune-docs.md`가 전역 `~/.config/opencode/commands/` 또는 프로젝트 `.opencode/commands/`에 있는지 확인하고 OpenCode 재시작 |
+| 예상과 다른 curation 사본이 실행됨 | Step 0의 loaded base directory 확인; 의도하지 않은 중복 사본 제거 또는 프로젝트 로컬 오버라이드 버전 정렬 |
+| 같은 이름의 스킬이 두 번 보임 | 설치된 OpenCode/Oh My OpenCode 조합에서는 중복 해소가 불확실한 상태이므로 사용할 범위 하나만 남김 |
+| 자동 호출이 안 됨 | `/tune-docs`를 쓰거나 `context-curation 스킬을 실행해줘`라고 명시 호출 |
+| init이 Git 저장소 누락을 알리지 않음 | init contract block이 최신인지, handoff spec에 `Git checkpoint policy`가 있는지 확인 |
+| 프로젝트가 상위 폴더의 Git 저장소로 감지됨 | `git rev-parse --show-toplevel` 결과 확인; 상위 저장소를 쓸지 프로젝트에서 별도로 `git init`할지 명시 |
+| handoff가 커밋을 제안하지 않음 | handoff contract block과 spec 정책 확인; clean worktree이면 제안하지 않는 것이 정상 |
+| 기존 staged 변경 때문에 checkpoint가 멈춤 | 자동으로 섞거나 unstage하지 않는 안전 동작; 기존 staged 범위 처리 방법을 명시 |
+| init 후 AGENTS.md에 curation 포인터가 없음 | handoff spec의 `AGENTS.md initialization` 섹션과 init contract block 상태 확인 |
 | init이 예전 경로에 파일을 만듦 | contract-block 검사기로 `.opencode/skills/session-context-init/SKILL.md` 상태 확인 |
 | handoff spec이 무시됨 | contract-block 검사기로 `.opencode/skills/session-handoff/SKILL.md` 상태 확인 |
 | 검사 결과가 `skill-missing` | 두 프로젝트 스킬이 정확히 `.opencode/skills/` 아래에 있는지 확인 |

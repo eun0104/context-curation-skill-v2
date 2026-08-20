@@ -2,6 +2,7 @@
 
 **Sessions harvested:** <NNN>–<NNN> · **Last tuned:** <date or "never">
 **Always-read cost:** ~<N> tokens → ~<N> tokens after this proposal
+**Git baseline:** <Git unavailable | not a work tree | parent work tree | branch @ HEAD; clean/dirty; staged paths noted separately>
 
 ## Summary
 
@@ -70,13 +71,25 @@ Recorded to avoid unchanged re-litigation. Reopen a candidate when its evidence 
 These alter what happens **every session from now on**, so review them separately from the
 one-off doc edits above.
 
-### F1. Document set / cadence
+### F0. AGENTS.md initialization (pre-init only)
+
+- **Curation routing entry:** <include the trigger row from templates/handoff-spec.md>
+- **L0 budget marker:** <include / project-approved change>
+- **Manual snippet required:** no
+
+### F1. Git checkpoint policy
+
+- **Current:** <missing / current policy summary>
+- **Proposed:** <exact policy change, or no change>
+- **Safety:** prompt-only init and commit; literal-path staging; no automatic branch or remote action
+
+### F2. Document set / cadence
 
 | Doc | Cadence now | Proposed | Why |
 |---|---|---|---|
 | `docs/handoff/decisions.md` | per-session | on-event | filler entries when no real decision was made |
 
-### F2. handoff.md fields
+### F3. handoff.md fields
 
 | Change | Field | Evidence |
 |---|---|---|
@@ -86,7 +99,7 @@ one-off doc edits above.
 **Fields before → after:** <N> → <N>. If this is a net increase, name what justifies the extra
 cost at every future session end.
 
-### F3. Draft spec diff
+### F4. Draft spec diff
 
 ```markdown
 <the exact lines changing in docs/handoff/handoff-spec.md>

@@ -16,7 +16,7 @@ Usage:
     python docs_inventory.py --root .
     python docs_inventory.py --root . --json
     python docs_inventory.py --root . --stale-days 60 --l0-budget 1500
-    python docs_inventory.py --root . --pre-init
+    python docs_inventory.py --root . --pre-init  # explicit override only
 """
 
 from __future__ import annotations
@@ -114,6 +114,16 @@ def session_stats(paths):
     }
 
 
+def read_curation_state(root: Path):
+    path = root / STATE_FILE
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return {"error": f"unreadable: {exc}"}
+
+
 def collect(root: Path, globs, apply_exclusions: bool = True):
     found = {}
     for pattern in globs:
@@ -124,6 +134,36 @@ def collect(root: Path, globs, apply_exclusions: bool = True):
                 continue
             found[path.resolve()] = path
     return sorted(found.values(), key=lambda p: str(p.relative_to(root)))
+
+
+def detect_lifecycle(root: Path):
+    """Return an evidence-based lifecycle mode and a human-readable reason."""
+    has_agents = (root / "AGENTS.md").is_file()
+    has_plan = (root / "PLAN.md").is_file()
+
+    if has_agents and has_plan:
+        return "normal", "root AGENTS.md and PLAN.md both exist"
+    if has_agents != has_plan:
+        present = "AGENTS.md" if has_agents else "PLAN.md"
+        missing = "PLAN.md" if has_agents else "AGENTS.md"
+        return "ambiguous", f"{present} exists but {missing} is missing"
+
+    sessions = session_stats(collect(root, SESSION_GLOBS, apply_exclusions=False))
+    if sessions["files"]:
+        return "ambiguous", "session log files exist but both startup files are missing"
+    if (root / "docs/handoff/handoff.md").is_file():
+        return "ambiguous", "handoff.md exists but both startup files are missing"
+
+    state = read_curation_state(root)
+    if state and state.get("error"):
+        return "ambiguous", "curation state is unreadable before startup files exist"
+    if state:
+        tuned_session = state.get("last_tuned_session")
+        harvested_session = state.get("harvested_through_session")
+        if tuned_session not in (None, 0) or harvested_session not in (None, 0):
+            return "ambiguous", "curation state records initialized sessions but startup files are missing"
+
+    return "pre-init", "no startup files or initialized-session evidence exists"
 
 
 def git_last_commit(root: Path, path: Path):
@@ -293,7 +333,14 @@ def find_duplicates(docs_text, threshold: float):
 # --------------------------------------------------------------------------
 
 def audit(root: Path, args) -> dict:
-    pre_init = getattr(args, "pre_init", False)
+    override = getattr(args, "pre_init", None)
+    if override is None:
+        mode, mode_reason = detect_lifecycle(root)
+    elif override:
+        mode, mode_reason = "pre-init", "explicit --pre-init override"
+    else:
+        mode, mode_reason = "normal", "explicit --normal override"
+    pre_init = mode == "pre-init"
     sessions = collect(root, SESSION_GLOBS, apply_exclusions=False)
     session_paths = {p.resolve() for p in sessions}
     # A single-file session log lives inside docs/ and would otherwise be audited
@@ -398,17 +445,12 @@ def audit(root: Path, args) -> dict:
     sess = session_stats(sessions)
 
     # -- curation state --------------------------------------------------
-    state = None
-    state_path = root / STATE_FILE
-    if state_path.is_file():
-        try:
-            state = json.loads(state_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:
-            state = {"error": f"unreadable: {exc}"}
+    state = read_curation_state(root)
 
     return {
         "root": str(root),
-        "mode": "pre-init" if pre_init else "normal",
+        "mode": mode,
+        "mode_reason": mode_reason,
         "docs": records,
         "budget": budget_findings,
         "broken_links": broken,
@@ -428,7 +470,11 @@ def audit(root: Path, args) -> dict:
 def report(result: dict, args) -> str:
     out = ["# Documentation Inventory", ""]
     if result.get("mode") == "pre-init":
-        out += ["Mode: **pre-init** — missing startup and session files are expected.", ""]
+        out += ["Mode: **pre-init** — detected automatically; missing startup and session files "
+                "are expected.", f"Evidence: {result['mode_reason']}.", ""]
+    elif result.get("mode") == "ambiguous":
+        out += ["Mode: **ambiguous** — do not continue with curation until the lifecycle is "
+                "clarified.", f"Evidence: {result['mode_reason']}.", ""]
     state = result["curation_state"]
     if state and state.get("last_tuned"):
         out.append(f"Last tuned: **{state['last_tuned']}** "
@@ -576,8 +622,11 @@ def main() -> int:
                         help="session context window, for harvest sizing (default: 200000)")
     parser.add_argument("--bootstrap-sessions", type=int, default=5,
                         help="recent sessions to read when no harvest state exists (default: 5)")
-    parser.add_argument("--pre-init", action="store_true",
-                        help="expect startup/session files to be absent before context init")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--pre-init", dest="pre_init", action="store_true", default=None,
+                      help="force pre-init after lifecycle ambiguity is explicitly resolved")
+    mode.add_argument("--normal", dest="pre_init", action="store_false",
+                      help="force normal mode after lifecycle ambiguity is explicitly resolved")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -592,7 +641,7 @@ def main() -> int:
         print(text)
     except BrokenPipeError:  # output piped into head/less
         os.close(sys.stdout.fileno())
-    return 0
+    return 2 if result.get("mode") == "ambiguous" else 0
 
 
 if __name__ == "__main__":

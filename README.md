@@ -51,21 +51,51 @@ changes.
 
 ## Installation
 
-```bash
-# Global installation (recommended)
-cp -r context-curation ~/.config/opencode/skills/
-cp context-curation/command/tune-docs.md ~/.config/opencode/commands/
+Choose one installation scope. OpenCode supports both global and project-local skills.
 
-# For a project-local installation:
-# cp -r context-curation <project>/.opencode/skills/
+**Global — reuse one copy across projects:**
+
+```bash
+mkdir -p ~/.config/opencode/skills ~/.config/opencode/commands
+cp -r context-curation ~/.config/opencode/skills/
+
+# Optional: explicit /tune-docs command in every project
+cp context-curation/command/tune-docs.md ~/.config/opencode/commands/
 ```
 
-Keep `context-curation` global, but copy `session-context-init` and `session-handoff` into the
-project's `.opencode/skills/` directory. Run curation in pre-init mode after the initial project
-plan is clear and before running `session-context-init`. It detects missing contract instruction
-blocks at the two fixed local paths and proposes their installation; the first approved run
-installs them and creates `docs/handoff/handoff-spec.md` and
+**Project-local — pin and review the version with one project:**
+
+```bash
+PROJECT_DIR=/path/to/project
+mkdir -p "$PROJECT_DIR/.opencode/skills" "$PROJECT_DIR/.opencode/commands"
+cp -r context-curation "$PROJECT_DIR/.opencode/skills/"
+
+# Optional: explicit /tune-docs command in this project
+cp "$PROJECT_DIR/.opencode/skills/context-curation/command/tune-docs.md" \
+   "$PROJECT_DIR/.opencode/commands/tune-docs.md"
+```
+
+Copying the skill folder completes installation. Users do not need to open or manually apply files
+under `integration/` or `templates/`. The command copy is optional; the skill can always be invoked
+by name. Restart OpenCode after installing or changing a skill or command so discovery is refreshed.
+
+If both scopes contain `context-curation`, treat the project-local copy as an intentional override.
+Keep the copies version-aligned unless the project is deliberately pinned, and verify the loaded
+skill base directory on the first run. If your OpenCode/Oh My OpenCode combination advertises both
+copies instead of resolving one, remove the unintended copy rather than relying on ambiguous
+selection. A run uses scripts, templates, and references only from the loaded copy.
+
+Regardless of the curation scope, copy `session-context-init` and `session-handoff` into the
+project's `.opencode/skills/` directory. After the initial project plan is clear, invoke curation
+before `session-context-init`. The skill detects the lifecycle automatically; no `pre-init` prompt
+argument is required. It proposes missing contract instruction blocks at the two fixed local paths.
+The first approved run installs them and creates `docs/handoff/handoff-spec.md` and
 `docs/handoff/.curation-state.json`.
+
+The spec also carries a prompt-only Git checkpoint policy. `session-context-init` detects a
+missing repository and offers `git init`; every `session-handoff` checks for uncommitted work and
+offers a checkpoint commit. The user must approve the exact operation, paths, and commit message.
+The policy never automates branch changes, push, merge, rebase, reset, or stash.
 
 Contract blocks are Markdown instructions, not deterministic runtime hooks. This skill does not
 install an OpenCode runtime hook.
@@ -81,18 +111,21 @@ agent execution contract.
 1. Form the initial project concept and a rough plan.
 2. Install the project-local `session-context-init` and `session-handoff` copies under
    `.opencode/skills/`.
-3. Before running context init, invoke curation explicitly:
+3. Before running context init, invoke curation explicitly. It detects pre-init from project state:
 
    ```text
-   /tune-docs pre-init
+   /tune-docs
    ```
 
-   Or ask: `Use context-curation in pre-init mode to design this project's memory contract.`
+   Or ask: `Run the context-curation skill for this project.`
 4. Review `docs/_tuning-proposal.md`. Missing or stale session contract blocks appear as blocking
    items.
    Approve or reject items by ID; no persistent project file is changed before approval.
 5. After the approved items are applied, run `session-context-init`. It creates root `AGENTS.md`,
-   root `PLAN.md`, and the files declared under `docs/handoff/`.
+   root `PLAN.md`, and the files declared under `docs/handoff/`. The spec supplies the required
+   curation routing entry and L0 budget marker for AGENTS.md; no separate snippet is applied. If
+   the project is not a Git repository, init asks before running `git init`, then offers the first
+   checkpoint after its writes.
 
 ### Periodic tuning
 
@@ -107,6 +140,13 @@ The skill audits and harvests evidence, writes `docs/_tuning-proposal.md`, and s
 proposal item by item; only approved items are applied. Typical triggers are five or more sessions
 since the last tuning, a closed milestone, documentation drift, an oversized AGENTS.md, or repeated
 agent mistakes.
+
+### Session-end Git checkpoint
+
+After writing the handoff, `session-handoff` runs a read-only Git status check. If work remains
+uncommitted, it shows staged work separately, proposes exact candidate paths and a message, and
+asks whether to commit. It never uses broad staging such as `git add -A`; declining does not block
+handoff.
 
 For standalone audit commands, see [Audit script](#audit-script). For detailed installation,
 operating settings, and troubleshooting, see
@@ -147,6 +187,10 @@ the fact.
 copies make each project's path and field contract reviewable. Keep the declarative handoff spec
 even when the procedural skills are local so init and handoff cannot drift apart.
 
+**Prompt for Git checkpoints, never automate Git workflow.** Init can offer repository
+initialization, and handoff can offer a narrow checkpoint commit. Both require explicit approval;
+branch and remote operations remain separate user requests.
+
 **Do not delete durable documentation.** Move it to `docs/archive/` and record what replaced it.
 Only the temporary review artifact `docs/_tuning-proposal.md` is removed after approved changes
 are applied.
@@ -169,8 +213,9 @@ To inspect a project without invoking the skill:
 # From this repository
 python context-curation/scripts/docs_inventory.py --root /path/to/project
 
-# Before session-context-init
+# Lifecycle is detected automatically; flags are only ambiguity overrides
 # python context-curation/scripts/docs_inventory.py --root /path/to/project --pre-init
+# python context-curation/scripts/docs_inventory.py --root /path/to/project --normal
 
 # Check fixed project-local session skill contract blocks (read-only by default)
 # python context-curation/scripts/session_contract_blocks.py --root /path/to/project
@@ -201,9 +246,11 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All sixteen current regression tests pass, covering the pre-init lifecycle, nested handoff paths,
-bootstrap scope, reachability, freshness, curation-state discovery, plural project skill paths,
-approved contract-block insertion, legacy-marker migration, and idempotence.
+All twenty-one current regression tests pass, covering automatic lifecycle detection, ambiguous
+startup evidence, AGENTS.md initialization routing, nested handoff paths, bootstrap scope,
+reachability, freshness, curation-state discovery, plural project skill paths, approved
+contract-block insertion, prompt-only Git checkpoint contracts, legacy-marker migration,
+outdated-block upgrades, and idempotence.
 
 ## License
 
