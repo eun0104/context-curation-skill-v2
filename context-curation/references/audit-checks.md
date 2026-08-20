@@ -17,10 +17,12 @@ later ones.
 
 ## 0. Pre-init mode
 
-Run with `--pre-init` only before `session-context-init`. Missing root `AGENTS.md`, root `PLAN.md`,
-handoff files, and session logs are expected in this mode and are not defects. Review any existing
-documentation for contradictions and reachability, but use the initial project concept and plan
-to design a minimal contract rather than manufacturing history-based findings.
+The inventory detects pre-init automatically when both root startup files and initialized-session
+evidence are absent. Missing root `AGENTS.md`, root `PLAN.md`, handoff files, and session logs are
+expected in this mode and are not defects. Review any existing documentation for contradictions
+and reachability, but use the initial project concept and plan to design a minimal contract rather
+than manufacturing history-based findings. Use `--pre-init` only after an `ambiguous` result has
+been explicitly resolved by the user.
 
 ## 1. L0 over budget
 
@@ -128,3 +130,14 @@ If an item has survived three or more handoffs unchanged, it is not session stat
 it's project state that should be promoted, or it's a stalled task that belongs in `PLAN.md`
 as an explicit blocker. Carrying it forward silently is how a handoff file turns into a
 second, unmanaged AGENTS.md.
+
+## 8. Missing Git checkpoint contract
+
+Check `docs/handoff/handoff-spec.md` for `## Git checkpoint policy` and run
+`scripts/session_contract_blocks.py --root .`. A missing policy or stale session block means init
+or handoff cannot reliably remind the user about Git initialization and commits; put the repair in
+proposal section F and make it blocking.
+
+Do not repair this by running `git init` or committing during the audit. Preserve existing staged
+work, apply the contract only after approval, and let `session-context-init`, `session-handoff`, or
+the normal-mode post-apply checkpoint ask for the Git operation at the proper boundary.

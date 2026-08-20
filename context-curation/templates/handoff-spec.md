@@ -28,6 +28,53 @@ them with their shared upstream templates and note anything worth adopting.
 `init` = created by session-context-init · `per-session` = written every session · `on-event` = only when the trigger occurs ·
 `frozen` = not touched by handoff at all
 
+## AGENTS.md initialization
+
+When `session-context-init` creates root `AGENTS.md`, include this entry in its read-on-demand
+routing table. This makes later curation discoverable without requiring the user to install or
+apply a separate snippet.
+
+| Read this | When |
+|---|---|
+| skill `context-curation` | When AGENTS.md exceeds its budget, docs contradict each other, a milestone closes, no curation state exists after several sessions, or 5+ sessions have passed since `docs/handoff/.curation-state.json` `last_tuned` |
+
+Also include this budget marker near the top of `AGENTS.md`:
+
+```markdown
+<!-- L0 budget: 2000 tokens. Adding a line here requires removing one.
+     Run the context-curation skill when over. -->
+```
+
+## Git checkpoint policy
+
+This is a reminder and safety policy, not a branching workflow. Apply it during
+`session-context-init`, at the end of every `session-handoff`, and after an approved normal-mode
+curation apply.
+
+- **Repository check:** run `git --version` first. If Git is unavailable, report it and skip the
+  checkpoint without blocking the session operation. Otherwise run
+  `git rev-parse --show-toplevel`. If it fails, tell the user and ask whether to run `git init`.
+  If it resolves above the project root, report the parent repository and ask whether that scope
+  is intentional. Never initialize silently. Declining does not block init or handoff.
+- **Checkpoint check:** run `git status --short --branch`, then summarize unstaged and staged diffs.
+  If changes exist, offer a checkpoint commit with the exact candidate paths and proposed message.
+- **Approval boundary:** do not initialize, stage, or commit until the user explicitly approves
+  the operation, exact paths, and commit message. A general request to finish init or handoff is
+  not Git approval.
+- **Existing staged work:** inspect `git diff --cached --name-only` before staging. If it is not
+  empty, do not disturb or silently include it; show it separately and ask how the user wants it
+  handled.
+- **Narrow staging:** stage only approved literal paths with `git add -- <path>...`. Do not use
+  `git add -A`, `git add .`, wildcards, or a path derived from unverified output. Before committing,
+  show `git diff --cached --name-only` and `git diff --cached --stat` and confirm they match the
+  approved scope.
+- **No workflow automation:** never push, merge, rebase, reset, stash, amend, switch branches, or
+  create branches under this policy. Do not change local or global Git configuration. Those actions
+  require a separate user request; if commit identity is missing, report it instead of configuring
+  one silently.
+- **Declined checkpoint:** finish the session operation normally and report that uncommitted work
+  remains; include affected paths in handoff `In flight` when they matter to the next session.
+
 ## handoff.md fields
 
 Required. If a field is genuinely empty, write `none` — an omitted field is

@@ -27,7 +27,7 @@ def args(**overrides):
         "dup_threshold": 0.45,
         "context_window": 200000,
         "bootstrap_sessions": 5,
-        "pre_init": False,
+        "pre_init": None,
     }
     values.update(overrides)
     return types.SimpleNamespace(**values)
@@ -203,21 +203,53 @@ class InventoryTests(unittest.TestCase):
 
             self.assertEqual(expected, result["curation_state"])
 
-    def test_pre_init_mode_does_not_report_expected_missing_startup_files(self):
+    def test_fresh_project_auto_detects_pre_init(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             write(root, "README.md", "# Initial project concept\n")
 
-            result = inventory.audit(root, args(pre_init=True))
-            output = inventory.report(result, args(pre_init=True))
+            result = inventory.audit(root, args())
+            output = inventory.report(result, args())
 
             self.assertEqual("pre-init", result["mode"])
+            self.assertIn("no startup files", result["mode_reason"])
             self.assertEqual([], [item for item in result["budget"]
                                   if item.get("missing")])
             self.assertTrue(result["reachability_deferred"])
-            self.assertIn("missing startup and session files are expected", output)
+            self.assertIn("detected automatically", output)
             self.assertIn("No session log expected", output)
             self.assertIn("No orphan judgment is made", output)
+
+    def test_approved_pre_init_state_stays_pre_init_until_init_runs(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "docs/handoff/handoff-spec.md", "# Memory contract\n")
+            state = {
+                "schema_version": 1,
+                "last_tuned": "2026-08-20",
+                "last_tuned_session": None,
+                "harvested_through_session": 0,
+            }
+            write(root, "docs/handoff/.curation-state.json", json.dumps(state))
+
+            result = inventory.audit(root, args())
+
+            self.assertEqual("pre-init", result["mode"])
+
+    def test_inconsistent_lifecycle_evidence_is_ambiguous(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "AGENTS.md", "# Partial initialization\n")
+
+            result = inventory.audit(root, args())
+            output = inventory.report(result, args())
+            forced = inventory.audit(root, args(pre_init=True))
+
+            self.assertEqual("ambiguous", result["mode"])
+            self.assertIn("PLAN.md is missing", result["mode_reason"])
+            self.assertIn("do not continue with curation", output)
+            self.assertEqual("pre-init", forced["mode"])
+            self.assertIn("explicit", forced["mode_reason"])
 
 
 if __name__ == "__main__":

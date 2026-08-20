@@ -88,33 +88,49 @@ verification is worse than a deferred one, because it reports success either way
 
 ### Step 0 — Determine the mode
 
-Determine the lifecycle before inspecting document health.
+Resolve `<skill-dir>` as the directory containing the `SKILL.md` you actually loaded and announce
+that base directory. The skill may be global or project-local. If both copies exist, the
+project-local copy is the intended override; if the resolved directory is not the one the user
+intended, stop and report the mismatch. For the entire run, load scripts, templates, references,
+and integration blocks only from this same `<skill-dir>`; never mix resources from different
+copies.
 
-- **Both root `AGENTS.md` and `PLAN.md` are absent, and init has not run → pre-init mode.** Use the current
-  project concept, rough plan, repository contents, and project-local session skills as evidence.
-  Design only the minimum memory contract. Do not invent mature L2 knowledge, require session
-  logs, or treat missing startup files as defects.
-- **Init has run but no durable L2 layer exists → bootstrap mode.** Build the minimum viable L2
+From the project root, run the lifecycle-aware inventory without a mode flag:
+
+```bash
+python <skill-dir>/scripts/docs_inventory.py --root .
+```
+
+Also take a read-only Git baseline. Run `git --version`, then `git rev-parse --show-toplevel`; when
+they succeed, verify whether the reported top level is the project root and record the branch,
+HEAD, `git status --short --branch`, and pre-existing staged paths from
+`git diff --cached --name-only`. Distinguish `Git unavailable`, `not a Git work tree`, and `inside a
+parent work tree`. Do not run `git init`, stage, commit, configure Git, or alter the work tree
+during this baseline.
+
+Trust its evidence-based mode result:
+
+- **`pre-init` → pre-init mode.** Both root startup files and initialized-session evidence are
+  absent. Use the current project concept, rough plan, repository contents, and project-local
+  session skills as evidence. Design only the minimum memory contract. Do not invent mature L2
+  knowledge, require session logs, or treat missing startup files as defects.
+- **`normal`, but no durable L2 layer exists → bootstrap mode.** Build the minimum viable L2
   set *from what the logs actually contain*, not from a fixed list — creating docs the project
   has no material for produces empty files that then rot.
 
   Check `references/profiles/` for a profile matching this project's type (e.g. `physics-modeling.md` for physical-model development and data fitting). A profile lists the doc set, invariants, and handoff fields that this class of project reliably needs, and saves rediscovering them over several tuning rounds. Still confirm each one against the logs: a profile is a prior, not a checklist.
-- **A durable L2 layer exists → tune mode.** Proceed normally.
+- **`normal`, and a durable L2 layer exists → tune mode.** Proceed normally.
+- **`ambiguous` → stop.** Startup files are partial or contradict session evidence. Show the
+  reported evidence and ask the user whether initialization completed. Use `--pre-init` or
+  `--normal` only after that ambiguity is explicitly resolved; ordinary invocation needs no mode
+  argument.
 
 Announce which mode is in effect before continuing.
 
 ### Step 1 — Inventory
 
-Resolve `<skill-dir>` as the directory containing the `SKILL.md` you loaded, then run from the
-project root. Do not assume the skill is project-local; global installation is the default.
-
-```bash
-python <skill-dir>/scripts/docs_inventory.py --root .
-# Pre-init mode only:
-# python <skill-dir>/scripts/docs_inventory.py --root . --pre-init
-```
-
-Reports per-doc token counts, L0 budget status, orphans, broken pointers, stale docs,
+Use the inventory report produced in Step 0. It reports per-doc token counts, L0 budget status,
+orphans, broken pointers, stale docs,
 duplicated passages, and how many sessions are pending harvest. If Python is unavailable,
 approximate with `wc -l` and `grep -rn "docs/" AGENTS.md`.
 
@@ -127,6 +143,8 @@ python <skill-dir>/scripts/session_contract_blocks.py --root .
 This check is read-only. `skill-missing`, `block-missing`, `legacy-markers`, `outdated`,
 `malformed-block-markers`, or `duplicate-block-markers` must
 become a blocking proposal item. Do not inspect or modify a global session skill as a substitute.
+If `docs/handoff/handoff-spec.md` exists but lacks `AGENTS.md initialization` or `Git checkpoint
+policy`, add a blocking spec item as well; the installed session blocks depend on both sections.
 
 For how to fix each finding, read `references/audit-checks.md` now.
 
@@ -136,7 +154,9 @@ For how to fix each finding, read `references/audit-checks.md` now.
 plan, current conversation, existing repository evidence, and any explicitly supplied project
 constraints. A first-pass contract is a prior to test, not proof that the project already needs a
 large document set. Continue at Step 4 and propose the root startup files, the minimum
-`docs/handoff/` set, and the shared spec consumed by both local session skills.
+`docs/handoff/` set, and the shared spec consumed by both local session skills. The spec must
+include the `AGENTS.md initialization` and `Git checkpoint policy` sections from
+`templates/handoff-spec.md`; do not require the user to locate or apply a separate snippet.
 
 For bootstrap and tune modes, continue below.
 
@@ -242,6 +262,8 @@ Write `docs/_tuning-proposal.md` using `templates/tuning-proposal.md`, ordered b
 budget first, then invariants, then the rest). Each item needs its source citation, destination,
 and a before/after. Changes to the handoff spec go in their own section — they alter what
 happens every session from now on, so they deserve separate scrutiny from one-off doc edits.
+Include the read-only Git baseline. Treat a missing or stale `Git checkpoint policy` as a handoff
+spec proposal item, not as permission to initialize or commit.
 
 Then **re-read the proposal as an adversary before showing it.** Re-apply the promotion test to
 every item in section B and cut anything that no longer scores 2. Check that no item restates
@@ -264,6 +286,10 @@ item, ask whether the underlying rule should change — pushback usually general
 
 Only after approval, in this order:
 
+Before writing, repeat the read-only Git baseline. If HEAD changed, an approved target changed, or
+new staged paths appeared since the proposal, stop and show the difference. Never stash, reset,
+checkout, or overwrite the user's work to make the baseline match.
+
 1. If a session contract-block blocking item was approved, run
    `python <skill-dir>/scripts/session_contract_blocks.py --root . --apply`. It changes only the
    two known project-local SKILL.md files and is idempotent. Approved application migrates markers
@@ -272,8 +298,9 @@ Only after approval, in this order:
 2. Create or edit the destination docs, using `templates/` for new files.
 3. Update the AGENTS.md pointer table. Every new L2 doc needs a trigger condition phrased as a
    situation the agent will recognise itself to be in — "when working on this project" is not
-   one. In pre-init mode, do not create AGENTS.md or PLAN.md; put their approved startup contract
-   in the spec and let `session-context-init` create both root files.
+   one. In pre-init mode, do not create AGENTS.md or PLAN.md; put their approved startup contract,
+   including the required curation routing entry and L0 budget marker, in the spec and let
+   `session-context-init` create both root files.
 4. **Update `docs/handoff/handoff-spec.md`** — see the next section. Both project-local session
    skills consume it. Classify each doc `per-session` / `on-event` / `frozen` and add only
    `per-session` docs to the checklist.
@@ -294,6 +321,8 @@ Before reporting done, verify and state each:
 - [ ] No persistent document was deleted — only archived; the temporary proposal was removed
 - [ ] `docs/handoff/.curation-state.json` updated
 - [ ] Net change to per-session work stated explicitly
+- [ ] Git HEAD and pre-existing staged work were preserved
+- [ ] Handoff spec contains the prompt-only `Git checkpoint policy`
 
 Re-run `docs_inventory.py` to confirm rather than asserting from memory. Then **re-read every
 document that changed, plus AGENTS.md, in full**, and check that nothing now contradicts anything
@@ -301,11 +330,16 @@ else. Restructuring is exactly when contradictions get introduced — a fact mov
 while an old summary of it survives elsewhere — and it is much cheaper to catch here than three
 sessions later when a session has already acted on the wrong copy.
 
-In pre-init mode, rerun with `--pre-init`, verify the spec and both local contract blocks instead
-of absent startup files, rerun `session_contract_blocks.py --root .` and require both statuses to
-be `installed`,
-then instruct the user to run `session-context-init`. Perform the normal AGENTS.md and PLAN.md
-checks after init creates them.
+In pre-init mode, rerun `docs_inventory.py --root .` without a mode flag and require it to remain
+`pre-init`. Verify that the spec contains its `AGENTS.md initialization` section, rerun
+`session_contract_blocks.py --root .`, and require both statuses to be `installed`. Then instruct
+the user to run `session-context-init`. Perform the normal AGENTS.md and PLAN.md checks after init
+creates them.
+
+After an approved **normal-mode** apply, follow the spec's `Git checkpoint policy`: show the final
+read-only status and offer a commit for the exact curation-owned paths and proposed message. Do not
+stage or commit without explicit approval. In pre-init mode, leave repository initialization and
+the first checkpoint offer to `session-context-init`.
 
 ## Tuning the handoff spec
 
@@ -359,6 +393,8 @@ centrally months ago.
 
 ### What the spec controls
 
+- **AGENTS.md initialization** — the required curation routing entry and L0 budget marker
+- **Git checkpoints** — prompt-only repository initialization and narrow session-end commits
 - **Document set** — which files handoff writes each session
 - **Cadence** — `per-session` / `on-event` / `frozen` per document
 - **handoff.md fields** — the questions the next session actually needs answered
@@ -400,7 +436,7 @@ fact belongs in the persistent layer and is not there.
 | `references/audit-checks.md` | Steps 1 and 4 — interpreting each inventory finding |
 | `references/agents-md-contract.md` | Steps 4 and 6 — before editing AGENTS.md |
 | `references/profiles/*.md` | Step 0 — bootstrap, when a profile matches the project type |
-| `templates/handoff-spec.md` | When changing what handoff captures |
+| `templates/handoff-spec.md` | When creating or changing the project memory contract |
 | `templates/*.md` | Step 6 — creating a new persistent doc |
 | `scripts/docs_inventory.py` | Step 1 — run it, no need to read it |
 | `scripts/session_contract_blocks.py` | Steps 1, 6, and 7 — check, apply after approval, verify |

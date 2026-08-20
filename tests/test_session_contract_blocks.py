@@ -20,6 +20,34 @@ def write_skill(root: Path, name: str, text: str) -> Path:
 
 
 class SessionContractBlockTests(unittest.TestCase):
+    def test_init_contract_requires_agents_routing_from_spec(self):
+        skill_dir = SCRIPT.parents[1]
+        block = blocks.read_template(skill_dir, "session-context-init")
+        spec = (skill_dir / "templates" / "handoff-spec.md").read_text(encoding="utf-8")
+
+        self.assertIn("AGENTS.md initialization", block)
+        self.assertIn("skill `context-curation`", spec)
+        self.assertIn("L0 budget: 2000 tokens", spec)
+
+    def test_contracts_require_prompt_only_git_checkpoints(self):
+        skill_dir = SCRIPT.parents[1]
+        init = blocks.read_template(skill_dir, "session-context-init")
+        handoff = blocks.read_template(skill_dir, "session-handoff")
+        spec = (skill_dir / "templates" / "handoff-spec.md").read_text(encoding="utf-8")
+
+        self.assertIn("ask whether to run `git init`", init)
+        self.assertIn("exact paths and commit message", init)
+        self.assertIn("Git checkpoint policy", handoff)
+        self.assertIn("explicit approval", handoff)
+        self.assertIn("git --version", spec)
+        self.assertIn("git rev-parse --show-toplevel", spec)
+        self.assertIn("parent repository", spec)
+        self.assertIn("git status --short --branch", spec)
+        self.assertIn("git diff --cached --name-only", spec)
+        self.assertIn("git add -- <path>...", spec)
+        self.assertIn("Do not use\n  `git add -A`, `git add .`", spec)
+        self.assertIn("never push, merge, rebase, reset, stash, amend", spec)
+
     def test_check_uses_only_plural_project_skill_paths(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -104,6 +132,25 @@ class SessionContractBlockTests(unittest.TestCase):
                 text = (root / blocks.BLOCKS[name]["target"]).read_text(encoding="utf-8")
                 self.assertIn("-contract-block:start", text)
                 self.assertNotIn("-hook:start", text)
+
+    def test_old_contract_blocks_upgrade_to_git_checkpoint_policy(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            for name in blocks.BLOCKS:
+                start, end = blocks.marker_pair(name)
+                write_skill(root, name, f"# Existing\n\n{start}\nold contract\n{end}\n")
+
+            checked = blocks.run(root)
+            applied = blocks.run(root, apply=True)
+
+            self.assertEqual(["outdated", "outdated"],
+                             [item["status"] for item in checked])
+            self.assertEqual(["updated", "updated"],
+                             [item["action"] for item in applied])
+            init = (root / blocks.BLOCKS["session-context-init"]["target"])
+            handoff = (root / blocks.BLOCKS["session-handoff"]["target"])
+            self.assertIn("ask whether to run `git init`", init.read_text(encoding="utf-8"))
+            self.assertIn("Git checkpoint policy", handoff.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
