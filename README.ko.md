@@ -159,7 +159,8 @@ context-curation/
 │   ├── audit-checks.md            # 감사 항목별 대처
 │   ├── agents-md-contract.md      # L0에 들어갈 것 / 안 될 것
 │   └── profiles/
-│       └── physics-modeling.md    # 물리 모델링·데이터 피팅 프로젝트용 프로파일
+│       ├── scientific-modeling.md # 이론·수식 추적성과 검증 프로파일
+│       └── physics-modeling.md    # 소자 모델링·데이터 피팅 세부 프로파일
 ├── templates/                     # 새 문서 생성용 템플릿
 └── integration/                   # 프로젝트 로컬 init/handoff 연동 블록
 
@@ -181,6 +182,22 @@ tests/
 **Git checkpoint는 제안하고 Git workflow는 자동화하지 않음.** Init은 저장소 초기화를,
 handoff는 좁은 범위의 checkpoint commit을 제안할 수 있습니다. 둘 다 명시 승인이 필요하며,
 브랜치와 원격 작업은 별도 사용자 요청으로 남깁니다.
+
+**과학 모델링 프로젝트.** 초기 구상에서 과학 이론·메커니즘·수식을 적용하거나 결합하는 것이
+확인되면 pre-init부터 `references/profiles/scientific-modeling.md`를 읽습니다. 출처 또는 명시적
+유도식 → 정본 수식·주장 → 구현 위치 → 검증 근거의 추적성을 유지하고, 가설·채택 모델·검증된
+모델·수치 근사·피팅 파라미터·폐기된 대안을 구분합니다. 반복된 서술을 과학적 검증으로 간주하지
+않으며 빠진 연결은 `[TBD]`로 남깁니다. 물리 소자 모델링처럼 더 구체적인 profile은 이 공통
+계약을 대체하지 않고 추가 요구사항을 제공합니다.
+
+기본 curation 흐름은 모든 코딩 프로젝트에서 동작합니다. 과학 지원은 프로젝트 증거가 있을 때만
+추가되는 조건부 profile이므로, 과학 이론·메커니즘·수식이 없는 프로젝트에는 전용 문서나 필드를
+제안하지 않습니다.
+
+```text
+일반 코딩 프로젝트 → 기본 context curation
+과학 프로젝트 → 기본 context curation + scientific profile + 선택적 세부 profile
+```
 
 **지속 문서 삭제 없음.** `docs/archive/`로 이동하고 무엇이 대체했는지 남깁니다.
 검토용 임시 파일인 `docs/_tuning-proposal.md`만 승인된 적용이 끝난 뒤 제거합니다.
@@ -236,7 +253,8 @@ python -m unittest discover -s tests -v
 현재 자동 lifecycle 판정, 모순된 startup 증거, AGENTS.md 초기 라우팅, handoff 하위 경로,
 bootstrap 범위, 도달성, freshness, curation state 탐색, 복수형 프로젝트 스킬 경로, 승인된
 contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드,
-canonical 파일명 대소문자 검증, 멱등성을 포함한 회귀 테스트 23개가 통과합니다.
+과학 profile의 pre-init 적용과 추적성 계약, canonical 파일명 대소문자 검증, 멱등성을 포함한
+회귀 테스트 24개가 통과합니다.
 
 ## 라이선스
 

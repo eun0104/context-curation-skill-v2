@@ -52,6 +52,27 @@ class SessionContractBlockTests(unittest.TestCase):
         self.assertIn("Do not use\n  `git add -A`, `git add .`", spec)
         self.assertIn("never push, merge, rebase, reset, stash, amend", spec)
 
+    def test_scientific_profile_applies_pre_init_and_requires_traceability(self):
+        skill_dir = SCRIPT.parents[1]
+        skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+        profile = (skill_dir / "references" / "profiles"
+                   / "scientific-modeling.md").read_text(encoding="utf-8")
+        spec = (skill_dir / "templates" / "handoff-spec.md").read_text(encoding="utf-8")
+
+        self.assertIn("initial concept and rough plan in pre-init", skill)
+        self.assertIn("references/profiles/scientific-modeling.md", skill)
+        self.assertIn("source or explicit project derivation", profile)
+        self.assertIn("→ canonical equation or claim", profile)
+        self.assertIn("→ implementation location", profile)
+        self.assertIn("→ verification evidence", profile)
+        self.assertIn("Evidence state:", profile)
+        self.assertIn("Recurrence does not turn a hypothesis", skill)
+        self.assertIn("Applied curation profiles:", spec)
+        self.assertIn("context-curation:<profile-name>", spec)
+        self.assertNotIn("references/profiles/<name>.md", spec)
+        self.assertIn("curation provenance only", spec)
+        self.assertIn("do not need access", spec)
+
     def test_check_uses_only_plural_project_skill_paths(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

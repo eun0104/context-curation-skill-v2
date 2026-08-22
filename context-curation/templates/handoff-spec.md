@@ -8,9 +8,12 @@ future session, so they belong in a tuning proposal where they get reviewed as a
 
 **Last tuned:** YYYY-MM-DD (session NNN)
 **Base skill versions:** `session-context-init` <version> · `session-handoff` <version>
+**Applied curation profiles:** <none or `context-curation:<profile-name>`, ...>
 
 The base-skill line matters because project-local copies are pinned. At each tuning run, compare
 them with their shared upstream templates and note anything worth adopting.
+Applied profile IDs are curation provenance only. Session skills follow the concrete document,
+field, and cadence contract below; they do not need access to the curation skill's profile files.
 
 ## Document set
 
