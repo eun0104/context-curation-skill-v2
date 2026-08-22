@@ -148,6 +148,19 @@ uncommitted, it shows staged work separately, proposes exact candidate paths and
 asks whether to commit. It never uses broad staging such as `git add -A`; declining does not block
 handoff.
 
+## Scientific modeling projects
+
+When the initial concept applies or combines scientific theories, mechanisms, or equations,
+pre-init curation loads `references/profiles/scientific-modeling.md` before designing the memory
+contract. More specific profiles, such as physics-based device modeling and fitting, add their
+domain requirements without replacing the general scientific contract.
+
+Accepted scientific claims preserve a traceable chain from source or explicit derivation, through
+the canonical equation or claim and its implementation, to named verification evidence. The
+profile separates hypotheses, adopted and validated models, numerical approximations, fitted
+parameters, and rejected alternatives. Missing links remain explicit `[TBD]` items; recurring text
+is never treated as scientific validation by itself.
+
 For standalone audit commands, see [Audit script](#audit-script). For detailed installation,
 operating settings, and troubleshooting, see
 [`context-curation/INSTALL.md`](context-curation/INSTALL.md).
@@ -167,7 +180,8 @@ context-curation/
 │   ├── audit-checks.md            # Responses for each audit finding
 │   ├── agents-md-contract.md      # What belongs in L0 and what does not
 │   └── profiles/
-│       └── physics-modeling.md    # Profile for physics modeling and data fitting
+│       ├── scientific-modeling.md # Theory/equation traceability and verification
+│       └── physics-modeling.md    # Device-modeling and data-fitting refinements
 ├── templates/                     # Templates for new documents
 └── integration/                   # Project-local init and handoff integration blocks
 
@@ -246,7 +260,8 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All twenty-three current regression tests pass, covering strict canonical session-file casing,
+All twenty-four current regression tests pass, covering scientific pre-init profile and
+traceability contracts, strict canonical session-file casing,
 automatic lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing,
 nested handoff paths, bootstrap scope, reachability, freshness, curation-state discovery, plural
 project skill paths, approved

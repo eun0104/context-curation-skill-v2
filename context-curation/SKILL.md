@@ -7,7 +7,9 @@ description: >-
   docs, when AGENTS.md has grown past its read budget, when docs have gone stale, contradictory,
   duplicated, or unreachable, when a milestone closes, when a project has session logs but no
   structured knowledge layer yet, before first-session context initialization when an initial
-  project plan already exists, or when the user says anything like "tune the docs",
+  project plan already exists, when scientific theories, mechanisms, equations, assumptions, or
+  validation evidence need traceable project memory, or when the user says anything like
+  "tune the docs",
   "restructure AGENTS.md", "the agent keeps forgetting X", "our docs have drifted", or "where
   should this fact live". Do NOT use for routine end-of-session handoff writing — that belongs
   to the session-handoff skill.
@@ -108,7 +110,16 @@ HEAD, `git status --short --branch`, and pre-existing staged paths from
 parent work tree`. Do not run `git init`, stage, commit, configure Git, or alter the work tree
 during this baseline.
 
-Trust its evidence-based mode result:
+Before branching by mode, inspect `references/profiles/` using the evidence available now: the
+initial concept and rough plan in pre-init, and the repository plus session history later. Read and
+name every matching profile before designing the contract. Scientific projects that apply or
+combine theories, mechanisms, or equations must read
+`references/profiles/scientific-modeling.md`; also read a more specific profile when one matches.
+Record the selected profile names in the handoff spec as `context-curation:<profile-name>` IDs,
+not as Markdown paths; bundled profile files may be global and are not project-doc links.
+A profile is a prior, not a checklist: propose only entries supported by project evidence.
+
+Trust the inventory's evidence-based mode result:
 
 - **`pre-init` → pre-init mode.** Both root startup files and initialized-session evidence are
   absent. Use the current project concept, rough plan, repository contents, and project-local
@@ -117,8 +128,6 @@ Trust its evidence-based mode result:
 - **`normal`, but no durable L2 layer exists → bootstrap mode.** Build the minimum viable L2
   set *from what the logs actually contain*, not from a fixed list — creating docs the project
   has no material for produces empty files that then rot.
-
-  Check `references/profiles/` for a profile matching this project's type (e.g. `physics-modeling.md` for physical-model development and data fitting). A profile lists the doc set, invariants, and handoff fields that this class of project reliably needs, and saves rediscovering them over several tuning rounds. Still confirm each one against the logs: a profile is a prior, not a checklist.
 - **`normal`, and a durable L2 layer exists → tune mode.** Proceed normally.
 - **`ambiguous` → stop.** Startup files are partial or contradict session evidence. Show the
   reported evidence and ask the user whether initialization completed. Use `--pre-init` or
@@ -224,6 +233,11 @@ Promote without scoring: **invariants** ("never" / "must always"), **rejected al
 Reject without scoring: task progress (→ root `plan.md`), stopping point (→ `docs/handoff/HANDOFF.md`), anything
 already stated elsewhere (→ add a pointer), anything inferred but unverified (→ open question).
 
+When `references/profiles/scientific-modeling.md` applies, classify the candidate's evidence state
+before promotion. Recurrence does not turn a hypothesis into an accepted scientific claim.
+Require the profile's source → canonical equation or claim → implementation → verification chain;
+leave any missing link explicit rather than filling it from inference.
+
 Then route:
 
 | The fact is… | Destination | AGENTS.md entry |
@@ -254,13 +268,20 @@ holds** rather than asking the user. A doc confirmed accurate gets a `<!-- verif
 marker that resets its staleness clock; it becomes eligible again after the threshold. A doc
 found wrong becomes a rewrite plus, usually, an ADR recording what changed.
 
+For scientific model documents, code is not the sole authority. Follow the verification protocol
+in `references/profiles/scientific-modeling.md`: check the cited source or derivation, canonical
+equation and conventions, implementation mapping, and validation evidence as separate links. A
+mismatch is a finding to resolve, not permission to rewrite the theory to match the code.
+
 Read `references/agents-md-contract.md` before touching AGENTS.md.
 
 ### Step 5 — Proposal, then STOP
 
 Write `docs/_tuning-proposal.md` using `templates/tuning-proposal.md`, ordered by impact (L0
 budget first, then invariants, then the rest). Each item needs its source citation, destination,
-and a before/after. Changes to the handoff spec go in their own section — they alter what
+and a before/after. Scientific items also need their traceability chain and evidence state; use
+`[TBD]` for a missing link and make it a blocker or open question. Changes to the handoff spec go
+in their own section — they alter what
 happens every session from now on, so they deserve separate scrutiny from one-off doc edits.
 Include the read-only Git baseline. Treat a missing or stale `Git checkpoint policy` as a handoff
 spec proposal item, not as permission to initialize or commit.
@@ -323,6 +344,8 @@ Before reporting done, verify and state each:
 - [ ] Net change to per-session work stated explicitly
 - [ ] Git HEAD and pre-existing staged work were preserved
 - [ ] Handoff spec contains the prompt-only `Git checkpoint policy`
+- [ ] When a scientific profile applies, every accepted model claim has source, canonical form,
+  implementation mapping, and verification evidence; unresolved links remain explicit
 
 Re-run `docs_inventory.py` to confirm rather than asserting from memory. Then **re-read every
 document that changed, plus AGENTS.md, in full**, and check that nothing now contradicts anything
@@ -435,7 +458,7 @@ fact belongs in the persistent layer and is not there.
 | `references/routing-table.md` | Step 3 — destination choice and exact doc formats |
 | `references/audit-checks.md` | Steps 1 and 4 — interpreting each inventory finding |
 | `references/agents-md-contract.md` | Steps 4 and 6 — before editing AGENTS.md |
-| `references/profiles/*.md` | Step 0 — bootstrap, when a profile matches the project type |
+| `references/profiles/*.md` | Step 0 — pre-init, bootstrap, and tune, when a profile matches the project type |
 | `templates/handoff-spec.md` | When creating or changing the project memory contract |
 | `templates/*.md` | Step 6 — creating a new persistent doc |
 | `scripts/docs_inventory.py` | Step 1 — run it, no need to read it |

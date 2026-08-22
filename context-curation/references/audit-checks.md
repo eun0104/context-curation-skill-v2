@@ -107,6 +107,11 @@ resets the staleness clock; it does not suppress checks forever. If the verifica
 ages past the threshold, the audit flags the document again. If the doc drifted, the fix is a
 rewrite plus, usually, an ADR explaining what changed.
 
+For a scientific model document, do not treat the current code as the authority. Load
+`profiles/scientific-modeling.md` and verify the source or derivation, canonical equation and
+conventions, implementation mapping, and validation evidence independently. If they disagree,
+report the broken traceability link and leave verification pending until it is resolved.
+
 Stale invariants deserve extra care: a rule everyone quietly stopped following is worse than
 no rule, because it teaches the agent that rules are advisory.
 

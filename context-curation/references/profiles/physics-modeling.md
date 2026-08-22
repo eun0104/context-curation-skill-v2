@@ -3,6 +3,9 @@
 Applies to projects that build transport or device models from physical theory, fit them to
 measured data, and combine mechanisms from different theoretical frameworks.
 
+Apply this together with `scientific-modeling.md`. Its traceability chain, evidence states, and
+verification protocol remain mandatory; this profile adds device-modeling and fitting details.
+
 A profile is a **prior, not a checklist**. Confirm each item against what the session logs
 actually show before creating anything.
 
@@ -39,14 +42,19 @@ will extend it into regimes where it is meaningless, and the output will look co
 One entry per mechanism in the model:
 
 ```markdown
-### <Mechanism name>
+### EQ-<stable-id> — <Mechanism name>
+**Evidence state:** hypothesis | adopted | validated | rejected | superseded
 **Governing form:** <equation, in the notation actually used in the code>
+**Symbols and units:** <definitions, units, sign and boundary conventions>
 **Source:** <paper / textbook section / derived here in session NNN>
 **Assumes:** <every assumption inherited, listed — this is the part the code cannot tell you>
 **Valid for:** <carrier regime, field range, temperature range, dimensionality>
+**Approximation:** <numerical or analytical approximation, or none>
 **Implemented in:** `<file>:<function>`
 **Combined with:** <which other mechanisms, and whether their assumptions are compatible>
 **Known tension:** <where an assumption conflicts with another mechanism in the model>
+**Verified by:** <limiting case, benchmark, conservation check, test, or dataset>
+**Last verified:** YYYY-MM-DD
 ```
 
 The `Known tension` field is what makes this worth maintaining. In creative theory fusion the

@@ -61,6 +61,10 @@ handoff; editing both procedural SKILL.md files for every schema change would cr
 of truth. Edit a local skill only when a requirement cannot be expressed in the spec, and record
 generally useful changes for manual upstream review.
 
+The spec may record `context-curation:<profile-name>` IDs. They are provenance for later curation,
+not paths the session skills must load. Init and handoff consume the concrete document set,
+cadences, fields, and policies already materialized in the spec.
+
 The spec's `AGENTS.md initialization` section is the single source for the curation routing entry
 and L0 budget marker. `session-context-init` applies it while creating AGENTS.md. No integration
 snippet needs to be read or copied by the user.
