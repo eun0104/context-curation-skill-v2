@@ -25,9 +25,9 @@ Documents are classified by **read frequency**, not importance.
 | Layer | Documents | When read | Budget |
 |---|---|---|---|
 | L0 | `AGENTS.md` | Every session | 2,000-token hard cap |
-| L1 | root `PLAN.md`, `docs/handoff/handoff.md` | At session start | ~1,500 each |
+| L1 | root `plan.md`, `docs/handoff/HANDOFF.md` | At session start | ~1,500 each |
 | L2 | `decisions` · `architecture` · `domain` · `rules` · `reference` | On demand | Unlimited, but must be linked |
-| L3 | `docs/handoff/session-log.md`, `docs/archive/` | Never read wholesale; searched only | Append-only |
+| L3 | `docs/handoff/SESSION-LOG.md`, `docs/archive/` | Never read wholesale; searched only | Append-only |
 
 The L0 cap is not a spending limit. It is a **shape constraint**. If seven non-negotiable rules
 compete for attention with paragraphs of ordinary facts, they stop reading like rules.
@@ -122,7 +122,7 @@ agent execution contract.
    items.
    Approve or reject items by ID; no persistent project file is changed before approval.
 5. After the approved items are applied, run `session-context-init`. It creates root `AGENTS.md`,
-   root `PLAN.md`, and the files declared under `docs/handoff/`. The spec supplies the required
+   root `plan.md`, and the files declared under `docs/handoff/`. The spec supplies the required
    curation routing entry and L0 budget marker for AGENTS.md; no separate snippet is applied. If
    the project is not a Git repository, init asks before running `git init`, then offers the first
    checkpoint after its writes.
@@ -246,9 +246,10 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All twenty-one current regression tests pass, covering automatic lifecycle detection, ambiguous
-startup evidence, AGENTS.md initialization routing, nested handoff paths, bootstrap scope,
-reachability, freshness, curation-state discovery, plural project skill paths, approved
+All twenty-three current regression tests pass, covering strict canonical session-file casing,
+automatic lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing,
+nested handoff paths, bootstrap scope, reachability, freshness, curation-state discovery, plural
+project skill paths, approved
 contract-block insertion, prompt-only Git checkpoint contracts, legacy-marker migration,
 outdated-block upgrades, and idempotence.
 

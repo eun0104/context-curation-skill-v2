@@ -26,8 +26,12 @@ class SessionContractBlockTests(unittest.TestCase):
         spec = (skill_dir / "templates" / "handoff-spec.md").read_text(encoding="utf-8")
 
         self.assertIn("AGENTS.md initialization", block)
+        self.assertIn("and `plan.md` at the project root", block)
         self.assertIn("skill `context-curation`", spec)
         self.assertIn("L0 budget: 2000 tokens", spec)
+        self.assertIn("`docs/handoff/HANDOFF.md`", spec)
+        self.assertIn("`docs/handoff/SESSION-LOG.md`", spec)
+        self.assertIn("`docs/handoff/DECISIONS.md`", spec)
 
     def test_contracts_require_prompt_only_git_checkpoints(self):
         skill_dir = SCRIPT.parents[1]

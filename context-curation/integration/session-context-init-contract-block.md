@@ -2,7 +2,7 @@
 ## Project memory contract
 
 Require `docs/handoff/handoff-spec.md` before initialization and read it first. Keep `AGENTS.md`
-and `PLAN.md` at the project root. Create handoff-owned files only under `docs/handoff/`, using
+and `plan.md` at the project root. Create handoff-owned files only under `docs/handoff/`, using
 the paths, initial fields, and cadences declared in the spec. When creating `AGENTS.md`, include
 the routing entry and budget marker from the spec's `AGENTS.md initialization` section.
 

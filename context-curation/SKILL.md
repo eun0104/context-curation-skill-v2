@@ -1,8 +1,8 @@
 ---
 name: context-curation
 description: >-
-  Audit and restructure a project's persistent documentation layer — AGENTS.md, PLAN.md,
-  decisions.md, and the architecture / domain / rules / reference docs beneath them. Use this
+  Audit and restructure a project's persistent documentation layer — AGENTS.md, plan.md,
+  DECISIONS.md, and the architecture / domain / rules / reference docs beneath them. Use this
   skill whenever facts learned during recent sessions should be promoted into permanent project
   docs, when AGENTS.md has grown past its read budget, when docs have gone stale, contradictory,
   duplicated, or unreachable, when a milestone closes, when a project has session logs but no
@@ -21,8 +21,8 @@ Three skills manage the project's memory. Keep the division sharp:
 
 | Skill | Runs | Owns |
 |---|---|---|
-| `session-context-init` | Session 1, after pre-init curation | Creates root `AGENTS.md` and `PLAN.md`, then initializes files under `docs/handoff/` from the project spec |
-| `session-handoff` | Every session end | Appends to `docs/handoff/session-log.md`, rewrites `docs/handoff/handoff.md`, and appends on-event records under `docs/handoff/` |
+| `session-context-init` | Session 1, after pre-init curation | Creates root `AGENTS.md` and `plan.md`, then initializes files under `docs/handoff/` from the project spec |
+| `session-handoff` | Every session end | Appends to `docs/handoff/SESSION-LOG.md`, rewrites `docs/handoff/HANDOFF.md`, and appends on-event records under `docs/handoff/` |
 | **`context-curation`** | Once before init, then every ~5 sessions | **The doc layer and the project memory contract consumed by both session skills** |
 
 Handoff answers *where did we stop*. This skill answers *what should stop being session state
@@ -44,9 +44,9 @@ Classify by **how often a doc is read**, not by how important it feels.
 | Layer | Documents | Read when | Budget |
 |---|---|---|---|
 | **L0** | `AGENTS.md` | Every session, unconditionally | **2,000 tokens hard cap** |
-| **L1** | `docs/handoff/handoff.md`, root `PLAN.md` | Every session start, via pointer | ~1,500 tokens each |
-| **L2** | `docs/handoff/decisions.md`, `docs/architecture.md`, `docs/domain/*.md`, `docs/rules/*.md`, `docs/reference/*.md` | **Conditionally**, only when the task matches | Unbounded, pointer mandatory |
-| **L3** | `docs/handoff/session-log.md`, `docs/archive/` | Never read whole; grep only | Append-only |
+| **L1** | `docs/handoff/HANDOFF.md`, root `plan.md` | Every session start, via pointer | ~1,500 tokens each |
+| **L2** | `docs/handoff/DECISIONS.md`, `docs/architecture.md`, `docs/domain/*.md`, `docs/rules/*.md`, `docs/reference/*.md` | **Conditionally**, only when the task matches | Unbounded, pointer mandatory |
+| **L3** | `docs/handoff/SESSION-LOG.md`, `docs/archive/` | Never read whole; grep only | Append-only |
 
 Two failure modes this prevents: **L0 bloat**, where every session gets more expensive and the
 important lines get buried; and **L2 orphans**, where a doc is correct but nothing points to it,
@@ -168,7 +168,7 @@ left to think.
 **First, extract across the entire log — always, regardless of size:**
 
 ```bash
-grep -n "\[candidate\]\|\[gotcha\]\|\[decision\]" docs/handoff/session-log.md
+grep -n "\[candidate\]\|\[gotcha\]\|\[decision\]" docs/handoff/SESSION-LOG.md
 ```
 
 This is complete recurrence coverage for a fraction of the cost, and it is why the handoff spec
@@ -185,8 +185,8 @@ window is consumed:
 With a single append-only log, seek to a session by heading:
 
 ```bash
-grep -n "^#\{1,4\} *[Ss]ession *0*7" docs/handoff/session-log.md
-sed -n '<line>,$p' docs/handoff/session-log.md
+grep -n "^#\{1,4\} *[Ss]ession *0*7" docs/handoff/SESSION-LOG.md
+sed -n '<line>,$p' docs/handoff/SESSION-LOG.md
 ```
 
 If the whole log is small — the audit report gives its token count — reading it entirely is
@@ -197,7 +197,7 @@ State what was read. If the tag extraction returns nothing, tagging is not happe
 it for the handoff spec, and fall back to reading the unharvested range.
 
 Extract candidates: things learned, decided, discovered broken, or repeatedly re-explained.
-Then scan `docs/handoff/handoff.md` — items that have survived several handoffs unchanged are usually
+Then scan `docs/handoff/HANDOFF.md` — items that have survived several handoffs unchanged are usually
 project state wearing a disguise.
 
 Read `rejected_candidates` as prior decisions, not permanent suppression. Reconsider a rejected
@@ -214,14 +214,14 @@ Score each candidate. **2 or more → promote.**
 |---|---|
 | **Recurrence** | Appeared in 2+ distinct sessions, or the user re-explained it |
 | **Cost of loss** | Forgetting causes rework or a **wrong result** (not mere inconvenience) |
-| **Stability** | Still true in 5 sessions (if volatile → leave in `handoff.md`) |
+| **Stability** | Still true in 5 sessions (if volatile → leave in `HANDOFF.md`) |
 | **Non-derivability** | Not cheaply rediscovered by reading the code or data |
 
 Promote without scoring: **invariants** ("never" / "must always"), **rejected alternatives**
 ("tried X, failed because Y" — otherwise the agent proposes X again, confidently), and
 **external-system quirks** the agent cannot inspect.
 
-Reject without scoring: task progress (→ root `PLAN.md`), stopping point (→ `docs/handoff/handoff.md`), anything
+Reject without scoring: task progress (→ root `plan.md`), stopping point (→ `docs/handoff/HANDOFF.md`), anything
 already stated elsewhere (→ add a pointer), anything inferred but unverified (→ open question).
 
 Then route:
@@ -229,7 +229,7 @@ Then route:
 | The fact is… | Destination | AGENTS.md entry |
 |---|---|---|
 | A hard constraint | `docs/rules/<topic>-invariants.md` | **One line, verbatim** + link |
-| A choice + reasoning | `docs/handoff/decisions.md` | Conditional pointer |
+| A choice + reasoning | `docs/handoff/DECISIONS.md` | Conditional pointer |
 | System structure, data flow | `docs/architecture.md` | Conditional pointer |
 | External-system oddity | `docs/domain/gotchas.md` | Conditional pointer |
 | Domain knowledge the agent lacks | `docs/domain/<topic>.md` | Conditional pointer |
@@ -298,13 +298,13 @@ checkout, or overwrite the user's work to make the baseline match.
 2. Create or edit the destination docs, using `templates/` for new files.
 3. Update the AGENTS.md pointer table. Every new L2 doc needs a trigger condition phrased as a
    situation the agent will recognise itself to be in — "when working on this project" is not
-   one. In pre-init mode, do not create AGENTS.md or PLAN.md; put their approved startup contract,
+   one. In pre-init mode, do not create AGENTS.md or plan.md; put their approved startup contract,
    including the required curation routing entry and L0 budget marker, in the spec and let
    `session-context-init` create both root files.
 4. **Update `docs/handoff/handoff-spec.md`** — see the next section. Both project-local session
    skills consume it. Classify each doc `per-session` / `on-event` / `frozen` and add only
    `per-session` docs to the checklist.
-5. Append an entry to `docs/handoff/decisions.md` describing the restructuring itself. In pre-init
+5. Append an entry to `docs/handoff/DECISIONS.md` describing the restructuring itself. In pre-init
    mode, let `session-context-init` create this file from the approved spec instead.
 6. Update `docs/handoff/.curation-state.json`: date, session number (null before init),
    `harvested_through_session`, one-line summary, and structured rejected-candidate records. Store
@@ -333,7 +333,7 @@ sessions later when a session has already acted on the wrong copy.
 In pre-init mode, rerun `docs_inventory.py --root .` without a mode flag and require it to remain
 `pre-init`. Verify that the spec contains its `AGENTS.md initialization` section, rerun
 `session_contract_blocks.py --root .`, and require both statuses to be `installed`. Then instruct
-the user to run `session-context-init`. Perform the normal AGENTS.md and PLAN.md checks after init
+the user to run `session-context-init`. Perform the normal AGENTS.md and plan.md checks after init
 creates them.
 
 After an approved **normal-mode** apply, follow the spec's `Git checkpoint policy`: show the final
@@ -397,7 +397,7 @@ centrally months ago.
 - **Git checkpoints** — prompt-only repository initialization and narrow session-end commits
 - **Document set** — which files handoff writes each session
 - **Cadence** — `per-session` / `on-event` / `frozen` per document
-- **handoff.md fields** — the questions the next session actually needs answered
+- **HANDOFF.md fields** — the questions the next session actually needs answered
 - **Tagging** — which markers to leave in the session log for the next harvest
 
 ### Reading the evidence
@@ -406,7 +406,7 @@ Symptoms come from the session log and from the harvest, not from taste:
 
 | Symptom in the logs | Change to the spec |
 |---|---|
-| A session opened by re-deriving something the previous session knew | Add a required `handoff.md` field for it |
+| A session opened by re-deriving something the previous session knew | Add a required `HANDOFF.md` field for it |
 | A field reads "n/a" in most sessions | Remove it — noise crowds out the fields that matter |
 | A doc is rewritten every session but rarely changes | Move to `on-event` |
 | A doc changed materially and nobody noticed for several sessions | Move to `per-session` |
@@ -420,7 +420,7 @@ When adding one, name the one it replaces.
 ## When to run
 
 Every session wastes context; never lets the docs rot. Trigger on: 5+ sessions since
-`last_tuned` · AGENTS.md over budget · a `PLAN.md` milestone closing · 3+ accumulated
+`last_tuned` · AGENTS.md over budget · a `plan.md` milestone closing · 3+ accumulated
 learned/gotcha items · entering a new subsystem · **the user reporting that the agent keeps
 forgetting or re-deriving something**.
 

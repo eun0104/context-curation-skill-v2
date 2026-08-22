@@ -73,15 +73,15 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
 ```
 <프로젝트>/
 ├── AGENTS.md                         ← session-context-init 이 생성
-├── PLAN.md                           ← session-context-init 이 생성
+├── plan.md                           ← session-context-init 이 생성
 ├── .opencode/skills/
 │   ├── session-context-init/         ← 공유 원본에서 복사한 프로젝트 고정본
 │   └── session-handoff/              ← 공유 원본에서 복사한 프로젝트 고정본
 └── docs/handoff/
     ├── handoff-spec.md               ← context-curation 이 승인 후 관리
-    ├── handoff.md                    ← session-handoff 가 매 세션 갱신
-    ├── session-log.md                ← session-handoff 가 append
-    ├── decisions.md                  ← session-handoff 가 on-event append
+    ├── HANDOFF.md                    ← session-handoff 가 매 세션 갱신
+    ├── SESSION-LOG.md                ← session-handoff 가 append
+    ├── DECISIONS.md                  ← session-handoff 가 on-event append
     └── .curation-state.json          ← context-curation 이 관리
 ```
 
@@ -95,7 +95,7 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
 폴더의 파일을 수동으로 적용하지 않습니다. 첫 curation 실행이 승인된 변경만 적용합니다.
 
 1. **`session-context-init-contract-block.md`** — 로컬 init 스킬이 실행 전에
-   `docs/handoff/handoff-spec.md`를 요구하고, 루트 `AGENTS.md`·`PLAN.md`와 handoff 하위 파일을
+   `docs/handoff/handoff-spec.md`를 요구하고, 루트 `AGENTS.md`·`plan.md`와 handoff 하위 파일을
    올바른 위치에 만들며 Git 저장소 누락을 알리게 하는 정본 contract block입니다.
 2. **`session-handoff-contract-block.md`** — 로컬 handoff 스킬이 같은 spec을 읽고 쓰기 경로·
    주기·필드와 세션 종료 Git checkpoint 정책을 따르게 하는 정본 contract block입니다.
@@ -220,7 +220,7 @@ Python 3.8 이상이면 됩니다. 환경에서 실행 파일 이름이 `python3
 | 옵션 | 기본값 | 의미 |
 |---|---|---|
 | `--l0-budget` | 2000 | AGENTS.md 토큰 상한 |
-| `--l1-budget` | 1500 | 루트 PLAN.md / docs/handoff/handoff.md 상한 |
+| `--l1-budget` | 1500 | 루트 plan.md / docs/handoff/HANDOFF.md 상한 |
 | `--stale-days` | 90 | 이보다 오래된 문서를 의심 대상으로 표시 |
 | `--dup-threshold` | 0.45 | 문단 중복 판정 유사도 (0~1) |
 | `--context-window` | 200000 | 수확 범위를 계산할 컨텍스트 크기 |

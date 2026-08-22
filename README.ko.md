@@ -23,9 +23,9 @@
 | 레이어 | 문서 | 읽는 시점 | 예산 |
 |---|---|---|---|
 | L0 | `AGENTS.md` | 매 세션 무조건 | 2,000 토큰 하드캡 |
-| L1 | 루트 `PLAN.md`, `docs/handoff/handoff.md` | 세션 시작 시 | 각 ~1,500 |
+| L1 | 루트 `plan.md`, `docs/handoff/HANDOFF.md` | 세션 시작 시 | 각 ~1,500 |
 | L2 | `decisions` · `architecture` · `domain` · `rules` · `reference` | 조건부 | 무제한, 포인터 필수 |
-| L3 | `docs/handoff/session-log.md`, `docs/archive/` | 통째로 안 읽음, grep만 | append-only |
+| L3 | `docs/handoff/SESSION-LOG.md`, `docs/archive/` | 통째로 안 읽음, grep만 | append-only |
 
 L0 상한은 지출 한도가 아니라 **형태 강제 장치**입니다. 반드시 지켜야 할 불변 규칙 일곱 줄이
 단지 사실일 뿐인 문단들과 같은 지면에서 경쟁하면, 규칙이 규칙으로 읽히기를 그칩니다.
@@ -117,7 +117,7 @@ runtime hook을 설치하지 않습니다.
    항목으로 나타납니다. 항목 ID별로 승인하거나 거부하며, 승인 전에는 지속 프로젝트 파일을
    변경하지 않습니다.
 5. 승인 항목이 적용된 다음 `session-context-init`을 실행합니다. 루트 `AGENTS.md`, 루트
-   `PLAN.md`와 `docs/handoff/` 아래의 계약된 파일이 생성됩니다. AGENTS.md의 curation 포인터와
+   `plan.md`와 `docs/handoff/` 아래의 계약된 파일이 생성됩니다. AGENTS.md의 curation 포인터와
    L0 예산 마커는 spec에서 공급되므로 별도 snippet을 적용하지 않습니다. 프로젝트가 Git
    저장소가 아니면 init이 `git init` 실행 전에 묻고, 파일 생성 후 첫 checkpoint를 제안합니다.
 
@@ -235,8 +235,8 @@ python -m unittest discover -s tests -v
 
 현재 자동 lifecycle 판정, 모순된 startup 증거, AGENTS.md 초기 라우팅, handoff 하위 경로,
 bootstrap 범위, 도달성, freshness, curation state 탐색, 복수형 프로젝트 스킬 경로, 승인된
-contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드와
-멱등성을 포함한 회귀 테스트 21개가 통과합니다.
+contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드,
+canonical 파일명 대소문자 검증, 멱등성을 포함한 회귀 테스트 23개가 통과합니다.
 
 ## 라이선스
 

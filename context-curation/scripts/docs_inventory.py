@@ -50,8 +50,7 @@ EXCLUDE_PARTS = {
 
 # Session logs may be one append-only file or one file per session. Both supported.
 SESSION_GLOBS = [
-    "docs/handoff/session-log.md",
-    "docs/handoff/session_log.md",
+    "docs/handoff/SESSION-LOG.md",
     "docs/handoff/sessions/**/*.md",
     "docs/handoff/session-logs/**/*.md",
 ]
@@ -60,8 +59,8 @@ SESSION_GLOBS = [
 SESSION_MARKER_RE = re.compile(
     r"^#{1,4}\s*(?:session|세션)\s*[-#:]?\s*(\d+)", re.IGNORECASE | re.MULTILINE)
 
-L1_PATHS_LOWER = {"plan.md", "docs/handoff/handoff.md"}
-REQUIRED_L1_PATHS = ("PLAN.md", "docs/handoff/handoff.md")
+REQUIRED_L1_PATHS = ("plan.md", "docs/handoff/HANDOFF.md")
+L1_PATHS = set(REQUIRED_L1_PATHS)
 
 STATE_FILE = "docs/handoff/.curation-state.json"
 
@@ -92,6 +91,20 @@ def is_excluded(path: Path, root: Path) -> bool:
     except ValueError:
         return True
     return any(part in EXCLUDE_PARTS for part in rel_parts)
+
+
+def is_exact_file(root: Path, rel: str) -> bool:
+    """Check a relative file path with exact casing, including on Windows."""
+    current = root
+    for part in Path(rel).parts:
+        try:
+            match = next((entry for entry in current.iterdir() if entry.name == part), None)
+        except OSError:
+            return False
+        if match is None:
+            return False
+        current = match
+    return current.is_file()
 
 
 def session_stats(paths):
@@ -127,7 +140,11 @@ def read_curation_state(root: Path):
 def collect(root: Path, globs, apply_exclusions: bool = True):
     found = {}
     for pattern in globs:
-        for path in root.glob(pattern):
+        has_magic = any(char in pattern for char in "*?[")
+        candidates = root.glob(pattern) if has_magic else (
+            [root / pattern] if is_exact_file(root, pattern) else []
+        )
+        for path in candidates:
             if not path.is_file():
                 continue
             if apply_exclusions and is_excluded(path, root):
@@ -138,21 +155,21 @@ def collect(root: Path, globs, apply_exclusions: bool = True):
 
 def detect_lifecycle(root: Path):
     """Return an evidence-based lifecycle mode and a human-readable reason."""
-    has_agents = (root / "AGENTS.md").is_file()
-    has_plan = (root / "PLAN.md").is_file()
+    has_agents = is_exact_file(root, "AGENTS.md")
+    has_plan = is_exact_file(root, "plan.md")
 
     if has_agents and has_plan:
-        return "normal", "root AGENTS.md and PLAN.md both exist"
+        return "normal", "root AGENTS.md and plan.md both exist"
     if has_agents != has_plan:
-        present = "AGENTS.md" if has_agents else "PLAN.md"
-        missing = "PLAN.md" if has_agents else "AGENTS.md"
+        present = "AGENTS.md" if has_agents else "plan.md"
+        missing = "plan.md" if has_agents else "AGENTS.md"
         return "ambiguous", f"{present} exists but {missing} is missing"
 
     sessions = session_stats(collect(root, SESSION_GLOBS, apply_exclusions=False))
     if sessions["files"]:
         return "ambiguous", "session log files exist but both startup files are missing"
-    if (root / "docs/handoff/handoff.md").is_file():
-        return "ambiguous", "handoff.md exists but both startup files are missing"
+    if is_exact_file(root, "docs/handoff/HANDOFF.md"):
+        return "ambiguous", "HANDOFF.md exists but both startup files are missing"
 
     state = read_curation_state(root)
     if state and state.get("error"):
@@ -221,7 +238,7 @@ def classify_layer(rel: str) -> str:
     normalized = rel.replace("\\", "/")
     if normalized == ENTRY_DOC:
         return "L0"
-    if normalized.lower() in L1_PATHS_LOWER:
+    if normalized in L1_PATHS:
         return "L1"
     return "L2"
 
@@ -565,7 +582,7 @@ def report(result: dict, args) -> str:
         if result.get("mode") == "pre-init":
             out.append("No session log expected before `session-context-init` runs.")
         else:
-            out.append("No session log found. Expected `docs/handoff/session-log.md` "
+            out.append("No session log found. Expected `docs/handoff/SESSION-LOG.md` "
                        "or `docs/handoff/sessions/`.")
     else:
         out.append(f"{s['files']} file(s), {s['entries']} session entries, "
@@ -613,7 +630,7 @@ def main() -> int:
     parser.add_argument("--l0-budget", type=int, default=2000,
                         help="token budget for AGENTS.md (default: 2000)")
     parser.add_argument("--l1-budget", type=int, default=1500,
-                        help="token budget for PLAN.md / handoff.md (default: 1500)")
+                        help="token budget for plan.md / HANDOFF.md (default: 1500)")
     parser.add_argument("--stale-days", type=int, default=90,
                         help="flag docs older than this (default: 90)")
     parser.add_argument("--dup-threshold", type=float, default=0.45,

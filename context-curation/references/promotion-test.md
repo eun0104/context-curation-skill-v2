@@ -28,7 +28,7 @@ silently incorrect passes. A tool flag that saves thirty seconds does not.
 Will this still be true in five sessions?
 
 If it will likely change soon, it is session state, not project state — leave it in
-`handoff.md`. Promoting volatile facts is how docs start contradicting the code.
+`HANDOFF.md`. Promoting volatile facts is how docs start contradicting the code.
 
 ### 4. Non-derivability
 Can the agent cheaply rediscover this by reading the code or data?
@@ -45,10 +45,10 @@ imposed from outside, things that were tried and failed.
 
 ## Automatic rejection
 
-- Task progress → belongs in root `PLAN.md`
-- "Where I stopped" → belongs in `handoff.md`
+- Task progress → belongs in root `plan.md`
+- "Where I stopped" → belongs in `HANDOFF.md`
 - Anything already stated in another persistent doc → add a pointer, don't restate
-- Anything the agent inferred but did not verify → not a fact yet; note it as an open question in `handoff.md`
+- Anything the agent inferred but did not verify → not a fact yet; note it as an open question in `HANDOFF.md`
 
 ## Worked examples
 
@@ -64,11 +64,11 @@ Recurrence ✗ · Loss ✗ · Stability ✓ · Non-derivable ✗ (it's in `--hel
 stripes get misclassified by coherence alone."
 Recurrence ✗ · Loss ✓ (agent would re-propose the simpler wrong approach) · Stability ✓ ·
 Non-derivable ✓ (the rejected alternative is invisible in the code)
-→ **Promote** to `decisions.md` as an ADR. Score 3.
+→ **Promote** to `DECISIONS.md` as an ADR. Score 3.
 
 **Candidate:** "The vision model must never compute the final measured ratio directly."
 → **Promote** immediately as an invariant, no scoring. Rules file + one AGENTS.md line.
 
 **Candidate:** "Abstract is 7 words over the limit."
 Recurrence ✗ · Loss ✗ (a script measures it) · Stability ✗ (fixed next session) · Non-derivable ✗
-→ **Reject.** This is current state, not project knowledge. → `docs/handoff/handoff.md` or root `PLAN.md`.
+→ **Reject.** This is current state, not project knowledge. → `docs/handoff/HANDOFF.md` or root `plan.md`.

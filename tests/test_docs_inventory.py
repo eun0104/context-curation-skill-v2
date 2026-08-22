@@ -41,12 +41,43 @@ def write(root: Path, rel: str, text: str) -> Path:
 
 
 class InventoryTests(unittest.TestCase):
-    def test_only_contract_paths_are_l1_and_all_docs_need_reachability(self):
+    def test_canonical_session_path_casing_matches_runtime_skills(self):
+        spec = (SCRIPT.parents[1] / "templates" / "handoff-spec.md")
+        spec_text = spec.read_text(encoding="utf-8")
+
+        self.assertEqual(("plan.md", "docs/handoff/HANDOFF.md"),
+                         inventory.REQUIRED_L1_PATHS)
+        self.assertIn("docs/handoff/SESSION-LOG.md", inventory.SESSION_GLOBS)
+        self.assertNotIn("docs/handoff/session-log.md", inventory.SESSION_GLOBS)
+        self.assertIn("`plan.md`", spec_text)
+        self.assertIn("`docs/handoff/HANDOFF.md`", spec_text)
+        self.assertIn("`docs/handoff/SESSION-LOG.md`", spec_text)
+        self.assertIn("`docs/handoff/DECISIONS.md`", spec_text)
+
+    def test_noncanonical_casing_is_not_accepted_as_the_runtime_contract(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             write(root, "AGENTS.md", "[plan](PLAN.md)\n")
-            write(root, "PLAN.md", "# Plan\n")
-            write(root, "docs/handoff/handoff.md", "# Handoff\n")
+            write(root, "PLAN.md", "# Wrong-case plan\n")
+            write(root, "docs/handoff/handoff.md", "# Wrong-case handoff\n")
+            write(root, "docs/handoff/session-log.md", "## Session 001\n")
+
+            result = inventory.audit(root, args())
+            layers = {record["path"]: record["layer"] for record in result["docs"]}
+            missing = {item["path"] for item in result["budget"] if item.get("missing")}
+
+            self.assertEqual("ambiguous", result["mode"])
+            self.assertIn("plan.md is missing", result["mode_reason"])
+            self.assertEqual("L2", layers["PLAN.md"])
+            self.assertEqual({"plan.md", "docs/handoff/HANDOFF.md"}, missing)
+            self.assertEqual(0, result["sessions"]["files"])
+
+    def test_only_contract_paths_are_l1_and_all_docs_need_reachability(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "AGENTS.md", "[plan](plan.md)\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
             write(root, "README.md", "# How to run\n")
             write(root, "docs/subsystem/README.md", "# Subsystem\n")
 
@@ -54,11 +85,11 @@ class InventoryTests(unittest.TestCase):
             layers = {record["path"]: record["layer"] for record in result["docs"]}
 
             self.assertEqual("L0", layers["AGENTS.md"])
-            self.assertEqual("L1", layers["PLAN.md"])
-            self.assertEqual("L1", layers["docs/handoff/handoff.md"])
+            self.assertEqual("L1", layers["plan.md"])
+            self.assertEqual("L1", layers["docs/handoff/HANDOFF.md"])
             self.assertEqual("L2", layers["README.md"])
             self.assertEqual("L2", layers["docs/subsystem/README.md"])
-            self.assertIn("docs/handoff/handoff.md", result["orphans"])
+            self.assertIn("docs/handoff/HANDOFF.md", result["orphans"])
             self.assertIn("README.md", result["orphans"])
 
     def test_missing_required_l1_docs_are_reported(self):
@@ -70,17 +101,17 @@ class InventoryTests(unittest.TestCase):
             missing = {item["path"] for item in result["budget"]
                        if item.get("missing")}
 
-            self.assertEqual({"PLAN.md", "docs/handoff/handoff.md"},
+            self.assertEqual({"plan.md", "docs/handoff/HANDOFF.md"},
                              missing - {"AGENTS.md"})
 
     def test_verification_marker_resets_but_does_not_disable_staleness(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             write(root, "AGENTS.md",
-                  "[plan](PLAN.md) [handoff](docs/handoff/handoff.md) "
+                  "[plan](plan.md) [handoff](docs/handoff/HANDOFF.md) "
                   "[old](docs/old.md) [fresh](docs/fresh.md)\n")
-            write(root, "PLAN.md", "# Plan\n")
-            write(root, "docs/handoff/handoff.md", "# Handoff\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
             old_date = (date.today() - timedelta(days=180)).isoformat()
             old_doc = write(root, "docs/old.md", f"<!-- verified: {old_date} -->\n")
             fresh_doc = write(root, "docs/fresh.md",
@@ -99,11 +130,11 @@ class InventoryTests(unittest.TestCase):
     def test_bootstrap_uses_latest_five_actual_session_entries(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            write(root, "AGENTS.md", "[plan](PLAN.md) [handoff](docs/handoff/handoff.md)\n")
-            write(root, "PLAN.md", "# Plan\n")
-            write(root, "docs/handoff/handoff.md", "# Handoff\n")
+            write(root, "AGENTS.md", "[plan](plan.md) [handoff](docs/handoff/HANDOFF.md)\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
             headings = "\n".join(f"## Session {number}" for number in (1, 3, 7, 9, 10, 12))
-            write(root, "docs/handoff/session-log.md", headings)
+            write(root, "docs/handoff/SESSION-LOG.md", headings)
 
             result = inventory.audit(root, args())
             output = inventory.report(result, args())
@@ -126,9 +157,9 @@ class InventoryTests(unittest.TestCase):
     def test_broken_targets_in_unreachable_docs_do_not_create_noise(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            write(root, "AGENTS.md", "[plan](PLAN.md) [handoff](docs/handoff/handoff.md)\n")
-            write(root, "PLAN.md", "# Plan\n")
-            write(root, "docs/handoff/handoff.md", "# Handoff\n")
+            write(root, "AGENTS.md", "[plan](plan.md) [handoff](docs/handoff/HANDOFF.md)\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
             write(root, "docs/orphan.md", "[missing](missing.md)\n")
 
             result = inventory.audit(root, args())
@@ -140,9 +171,9 @@ class InventoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             write(root, "AGENTS.md",
-                  "[plan](PLAN.md) [handoff](docs/handoff/handoff.md) [rules](docs/rules.md)\n")
-            write(root, "PLAN.md", "# Plan\n")
-            write(root, "docs/handoff/handoff.md", "# Handoff\n")
+                  "[plan](plan.md) [handoff](docs/handoff/HANDOFF.md) [rules](docs/rules.md)\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
             write(root, "docs/rules.md", "[missing](missing.md)\n")
 
             result = inventory.audit(root, args())
@@ -193,9 +224,9 @@ class InventoryTests(unittest.TestCase):
     def test_state_is_loaded_from_handoff_control_directory(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            write(root, "AGENTS.md", "[plan](PLAN.md) [handoff](docs/handoff/handoff.md)\n")
-            write(root, "PLAN.md", "# Plan\n")
-            write(root, "docs/handoff/handoff.md", "# Handoff\n")
+            write(root, "AGENTS.md", "[plan](plan.md) [handoff](docs/handoff/HANDOFF.md)\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
             expected = {"schema_version": 1, "last_tuned": "2026-08-18"}
             write(root, "docs/handoff/.curation-state.json", json.dumps(expected))
 
@@ -246,7 +277,7 @@ class InventoryTests(unittest.TestCase):
             forced = inventory.audit(root, args(pre_init=True))
 
             self.assertEqual("ambiguous", result["mode"])
-            self.assertIn("PLAN.md is missing", result["mode_reason"])
+            self.assertIn("plan.md is missing", result["mode_reason"])
             self.assertIn("do not continue with curation", output)
             self.assertEqual("pre-init", forced["mode"])
             self.assertIn("explicit", forced["mode_reason"])
