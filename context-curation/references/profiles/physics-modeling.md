@@ -11,7 +11,7 @@ actually show before creating anything.
 1. What makes this project class distinctive
 2. Recommended L2 documents
 3. Recommended invariants
-4. Recommended handoff.md fields
+4. Recommended HANDOFF.md fields
 5. What NOT to promote
 
 ## What makes this project class distinctive
@@ -88,7 +88,7 @@ Include **numerical** gotchas alongside tool ones. Distinguishing a convergence 
 physical result is a recurring judgement here, and getting it wrong in either direction wastes a
 session — chasing physics that is a solver artefact, or dismissing real physics as one.
 
-### `docs/handoff/decisions.md`
+### `docs/handoff/DECISIONS.md`
 
 Physics choices are ADRs. `Revisit if` maps naturally onto data conditions:
 *"Revisit if we obtain low-temperature data below 100 K"* — the decision was made under a data
@@ -107,7 +107,7 @@ For `docs/rules/modeling-invariants.md`, with one-line summaries in AGENTS.md:
 Every invariant needs its "Instead" line: what to do when the rule blocks progress. A rule with
 no alternative path gets worked around rather than followed.
 
-## Recommended handoff.md fields
+## Recommended HANDOFF.md fields
 
 Add to the standard set, replacing generic fields rather than accumulating on top:
 
@@ -124,4 +124,4 @@ obvious while looking at the plot, and it is completely gone by the next session
 - Individual fit runs and their numbers → session log; only *accepted* values reach `reference/`
 - Plot styling, file paths for one figure → not project knowledge
 - Anything derivable by running the code and looking → the code is its own documentation
-- A physical intuition not yet tested against data → `handoff.md` as an open question, not a domain doc. Promoting an untested intuition into the persistent layer converts a hypothesis into an assumption without anyone deciding to.
+- A physical intuition not yet tested against data → `HANDOFF.md` as an open question, not a domain doc. Promoting an untested intuition into the persistent layer converts a hypothesis into an assumption without anyone deciding to.

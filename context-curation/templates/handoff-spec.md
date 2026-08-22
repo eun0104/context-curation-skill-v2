@@ -17,10 +17,10 @@ them with their shared upstream templates and note anything worth adopting.
 | Document | Cadence | What goes in it |
 |---|---|---|
 | `AGENTS.md` | init | Created at the project root; routing table only. |
-| `PLAN.md` | init / on-event | Created at the project root; updated when plan state changes. |
-| `docs/handoff/handoff.md` | per-session | Rewritten fully. Fields below. |
-| `docs/handoff/session-log.md` | per-session | Appended. Entry format below. |
-| `docs/handoff/decisions.md` | on-event | Only when a real choice was made between alternatives |
+| `plan.md` | init / on-event | Created at the project root; updated when plan state changes. |
+| `docs/handoff/HANDOFF.md` | per-session | Rewritten fully. Fields below. |
+| `docs/handoff/SESSION-LOG.md` | per-session | Appended. Entry format below. |
+| `docs/handoff/DECISIONS.md` | on-event | Only when a real choice was made between alternatives |
 | `docs/reference/parameters.md` | on-event | When a fitted value is accepted as settled |
 | `docs/domain/gotchas.md` | on-event | When an external system behaved unexpectedly |
 | `docs/architecture.md` | frozen | Curation only |
@@ -75,7 +75,7 @@ curation apply.
 - **Declined checkpoint:** finish the session operation normally and report that uncommitted work
   remains; include affected paths in handoff `In flight` when they matter to the next session.
 
-## handoff.md fields
+## HANDOFF.md fields
 
 Required. If a field is genuinely empty, write `none` — an omitted field is
 indistinguishable from a forgotten one.
@@ -89,7 +89,7 @@ indistinguishable from a forgotten one.
 Fields are a budget. When adding one, name the one it replaces. Fifteen fields at the end of a
 long session produce fifteen shallow answers.
 
-## session-log.md entry format
+## SESSION-LOG.md entry format
 
 ```markdown
 ## Session NNN — YYYY-MM-DD

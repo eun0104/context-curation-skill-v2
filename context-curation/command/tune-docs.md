@@ -1,5 +1,5 @@
 ---
-description: Audit and restructure the project's persistent doc layer (AGENTS.md, PLAN.md, docs/*)
+description: Audit and restructure the project's persistent doc layer (AGENTS.md, plan.md, docs/*)
 ---
 
 Run the `context-curation` skill on this project.

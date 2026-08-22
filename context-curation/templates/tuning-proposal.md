@@ -27,7 +27,7 @@ runs `scripts/session_contract_blocks.py --root . --apply` against `.opencode/sk
 ## B. Promotions
 
 ### B1. <the fact, in one sentence>
-- **Source:** `docs/handoff/session-log.md`, Session 007, line 42 <or file path / commit>
+- **Source:** `docs/handoff/SESSION-LOG.md`, Session 007, line 42 <or file path / commit>
 - **Test:** recurrence ✓ · loss ✓ · stability ✓ · non-derivable ✗ → **3/4, promote**
 - **Destination:** `docs/domain/gotchas.md` (new section)
 - **AGENTS.md:** pointer already exists / add row: `| docs/domain/gotchas.md | when a tool fails unexpectedly |`
@@ -51,7 +51,7 @@ runs `scripts/session_contract_blocks.py --root . --apply` against `.opencode/sk
 
 | File | Reason | Superseded by |
 |---|---|---|
-| `docs/old-plan.md` | milestone closed, content merged | `PLAN.md` |
+| `docs/old-plan.md` | milestone closed, content merged | `plan.md` |
 
 ---
 
@@ -87,9 +87,9 @@ one-off doc edits above.
 
 | Doc | Cadence now | Proposed | Why |
 |---|---|---|---|
-| `docs/handoff/decisions.md` | per-session | on-event | filler entries when no real decision was made |
+| `docs/handoff/DECISIONS.md` | per-session | on-event | filler entries when no real decision was made |
 
-### F3. handoff.md fields
+### F3. HANDOFF.md fields
 
 | Change | Field | Evidence |
 |---|---|---|

@@ -5,16 +5,16 @@ The project keeps two startup files at the root and all handoff-owned state unde
 ```text
 <project>/
 ├── AGENTS.md
-├── PLAN.md
+├── plan.md
 ├── .opencode/skills/
 │   ├── context-curation/            # only when project-local
 │   ├── session-context-init/
 │   └── session-handoff/
 └── docs/handoff/
     ├── handoff-spec.md
-    ├── handoff.md
-    ├── session-log.md
-    ├── decisions.md
+    ├── HANDOFF.md
+    ├── SESSION-LOG.md
+    ├── DECISIONS.md
     └── .curation-state.json
 ```
 
@@ -35,7 +35,7 @@ unintended duplicate if the installed OpenCode/Oh My OpenCode versions expose bo
 | Initial concept and rough plan | — | Enough evidence to design a minimal memory contract |
 | Automatic lifecycle check | `context-curation` | Selects pre-init or normal from startup files and session evidence; stops if ambiguous |
 | Pre-init curation | `context-curation` | Proposes and, after approval, writes the memory spec and curation state |
-| Session 1 initialization | project-local `session-context-init` | Offers Git initialization when absent; creates root `AGENTS.md`, root `PLAN.md`, and the initial files and routing entries listed in the spec |
+| Session 1 initialization | project-local `session-context-init` | Offers Git initialization when absent; creates root `AGENTS.md`, root `plan.md`, and the initial files and routing entries listed in the spec |
 | Session end | project-local `session-handoff` | Rewrites handoff, appends the session log, writes on-event records, and offers a Git checkpoint when dirty |
 | Periodic tuning | `context-curation` | Restructures docs and revises the same spec every ~5 sessions |
 
@@ -84,7 +84,7 @@ the remaining uncommitted paths so the next session does not mistake them for a 
 | Surface | Owner |
 |---|---|
 | Root `AGENTS.md` routing and persistent L2 structure | `context-curation`, after approval |
-| Root `PLAN.md` initial creation and ongoing project planning | `session-context-init` / project workflow |
+| Root `plan.md` initial creation and ongoing project planning | `session-context-init` / project workflow |
 | `docs/handoff/handoff-spec.md` | `context-curation`, after approval |
 | Files written according to the spec | project-local session skills |
 | Shared upstream skill templates | human maintainer |
