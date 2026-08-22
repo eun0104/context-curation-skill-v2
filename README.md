@@ -150,6 +150,15 @@ handoff.
 
 ## Scientific modeling projects
 
+The base curation workflow works for any coding project. Scientific support is an optional,
+evidence-triggered profile: if the project does not use scientific theories, mechanisms, or
+equations, curation does not load the profile or propose its specialized documents and fields.
+
+```text
+Any coding project → base context curation
+Scientific project → base context curation + scientific profile + optional domain profile
+```
+
 When the initial concept applies or combines scientific theories, mechanisms, or equations,
 pre-init curation loads `references/profiles/scientific-modeling.md` before designing the memory
 contract. More specific profiles, such as physics-based device modeling and fitting, add their
