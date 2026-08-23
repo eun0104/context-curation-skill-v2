@@ -15,3 +15,6 @@ venv/
 
 # Curation artefacts belong to a project, not to this skill repo
 docs/_tuning-proposal.md
+
+# Distribution archives are built from the tree, not tracked in it
+*.zip
