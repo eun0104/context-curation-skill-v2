@@ -282,6 +282,27 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual("pre-init", forced["mode"])
             self.assertIn("explicit", forced["mode_reason"])
 
+    def test_report_survives_a_non_utf8_stdout_encoding(self):
+        # An agent harness always captures stdout through a pipe, so Python
+        # falls back to the locale encoding rather than the console's UTF-16
+        # path. On a cp949/cp932 machine that made every run die on the report's
+        # em-dash before it printed anything. In-process tests cannot catch this
+        # because unittest captures stdout with an encoding-free StringIO.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "docs/설계-문서.md", "# 설계 문서\n\n한글 본문 — em-dash 포함.\n")
+
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "cp949"
+            done = subprocess.run(["python", str(SCRIPT), "--root", str(root)],
+                                  capture_output=True, env=env)
+            stdout = done.stdout.decode("utf-8")
+
+            self.assertNotIn("Traceback", done.stderr.decode("utf-8", "replace"))
+            self.assertEqual(0, done.returncode)
+            self.assertIn("Mode: **pre-init** —", stdout)
+            self.assertIn("docs/설계-문서.md", stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

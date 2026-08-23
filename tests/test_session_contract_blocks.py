@@ -1,4 +1,6 @@
 import importlib.util
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -176,6 +178,24 @@ class SessionContractBlockTests(unittest.TestCase):
             handoff = (root / blocks.BLOCKS["session-handoff"]["target"])
             self.assertIn("ask whether to run `git init`", init.read_text(encoding="utf-8"))
             self.assertIn("Git checkpoint policy", handoff.read_text(encoding="utf-8"))
+
+    def test_check_output_survives_a_non_utf8_stdout_encoding(self):
+        # Same failure mode as the inventory script: the status line's em-dash
+        # is unencodable in cp949/cp932, and a harness pipe selects exactly that
+        # encoding. See test_docs_inventory for the full rationale.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write_skill(root, "session-context-init", "---\nname: x\n---\n")
+            write_skill(root, "session-handoff", "---\nname: y\n---\n")
+
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "cp949"
+            done = subprocess.run(["python", str(SCRIPT), "--root", str(root)],
+                                  capture_output=True, env=env)
+            stdout = done.stdout.decode("utf-8")
+
+            self.assertNotIn("Traceback", done.stderr.decode("utf-8", "replace"))
+            self.assertIn("session-handoff: block-missing —", stdout)
 
 
 if __name__ == "__main__":

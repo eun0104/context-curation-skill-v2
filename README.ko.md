@@ -253,8 +253,8 @@ python -m unittest discover -s tests -v
 현재 자동 lifecycle 판정, 모순된 startup 증거, AGENTS.md 초기 라우팅, handoff 하위 경로,
 bootstrap 범위, 도달성, freshness, curation state 탐색, 복수형 프로젝트 스킬 경로, 승인된
 contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드,
-과학 profile의 pre-init 적용과 추적성 계약, canonical 파일명 대소문자 검증, 멱등성을 포함한
-회귀 테스트 24개가 통과합니다.
+과학 profile의 pre-init 적용과 추적성 계약, canonical 파일명 대소문자 검증, 비 UTF-8 stdout
+인코딩 환경, 멱등성을 포함한 회귀 테스트 26개가 통과합니다.
 
 ## 라이선스
 

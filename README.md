@@ -269,13 +269,12 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All twenty-four current regression tests pass, covering scientific pre-init profile and
-traceability contracts, strict canonical session-file casing,
-automatic lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing,
-nested handoff paths, bootstrap scope, reachability, freshness, curation-state discovery, plural
-project skill paths, approved
-contract-block insertion, prompt-only Git checkpoint contracts, legacy-marker migration,
-outdated-block upgrades, and idempotence.
+All twenty-six current regression tests pass, covering non-UTF-8 stdout encodings, scientific
+pre-init profile and traceability contracts, strict canonical session-file casing, automatic
+lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing, nested handoff
+paths, bootstrap scope, reachability, freshness, curation-state discovery, plural project skill
+paths, approved contract-block insertion, prompt-only Git checkpoint contracts, legacy-marker
+migration, outdated-block upgrades, and idempotence.
 
 ## License
 

@@ -168,6 +168,9 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     args = parse_args()
     results = run(Path(args.root), apply=args.apply)
     if args.json:
