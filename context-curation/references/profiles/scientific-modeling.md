@@ -101,7 +101,7 @@ accumulating them:
 3. **Verification state** — last check performed, outcome, and remaining `[TBD]` links
 4. **Open scientific question** — hypothesis or validity issue distinct from a coding blocker
 
-Use `[candidate]` in `SESSION-LOG.md` for a possible durable scientific fact and include its stable
+Use `[candidate]` in `SESSION_LOG.md` for a possible durable scientific fact and include its stable
 ID when one exists. Use `[decision]` for an adopted, rejected, or superseded model choice. Keep raw
 runs and transient numerical results in the session log; promote only accepted results with
 dataset, method, uncertainty or fit quality, and provenance.

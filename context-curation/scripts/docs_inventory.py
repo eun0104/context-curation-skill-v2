@@ -11,6 +11,7 @@ Reports:
   4. Staleness        - docs untouched for longer than the threshold
   5. Duplication      - near-identical paragraphs across different docs
   6. Session logs     - volume of the L3 layer
+  7. Harness evidence - .omo/ plans and notepads, as a harvest source only
 
 Usage:
     python docs_inventory.py --root .
@@ -50,9 +51,19 @@ EXCLUDE_PARTS = {
 
 # Session logs may be one append-only file or one file per session. Both supported.
 SESSION_GLOBS = [
-    "docs/handoff/SESSION-LOG.md",
+    "docs/handoff/SESSION_LOG.md",
     "docs/handoff/sessions/**/*.md",
     "docs/handoff/session-logs/**/*.md",
+]
+
+# Harness-produced planning and knowledge artefacts (oh-my-openagent / omo).
+# These are harvest evidence, not curated project docs: the agent reads them to
+# find promotion candidates, but they are never audited for reachability or
+# staleness. Auditing them would report an orphan on every run forever, because
+# nothing in AGENTS.md is supposed to point at another tool's working state.
+EVIDENCE_GLOBS = [
+    ".omo/plans/*.md",
+    ".omo/notepads/**/*.md",
 ]
 
 # Matches "## Session 007", "### session-12", "## 세션 3"
@@ -125,6 +136,22 @@ def session_stats(paths):
         "latest": unique_numbers[-1] if unique_numbers else None,
         "session_numbers": unique_numbers,
     }
+
+
+def evidence_stats(root: Path, paths):
+    """Group harness evidence by kind so the harvest knows where to read."""
+    kinds = {}
+    for path in paths:
+        rel = str(path.relative_to(root)).replace(os.sep, "/")
+        kind = "plans" if "/plans/" in rel else "notepads"
+        try:
+            tokens = estimate_tokens(path.read_text(encoding="utf-8", errors="replace"))
+        except OSError:
+            continue
+        kinds.setdefault(kind, []).append({"path": rel, "tokens": tokens})
+    for items in kinds.values():
+        items.sort(key=lambda item: item["path"])
+    return kinds
 
 
 def read_curation_state(root: Path):
@@ -360,10 +387,13 @@ def audit(root: Path, args) -> dict:
     pre_init = mode == "pre-init"
     sessions = collect(root, SESSION_GLOBS, apply_exclusions=False)
     session_paths = {p.resolve() for p in sessions}
+    evidence = collect(root, EVIDENCE_GLOBS, apply_exclusions=False)
+    evidence_paths = {p.resolve() for p in evidence}
     # A single-file session log lives inside docs/ and would otherwise be audited
-    # as an L2 doc, producing noise in every other check.
-    docs = [p for p in collect(root, INCLUDE_GLOBS)
-            if p.resolve() not in session_paths]
+    # as an L2 doc, producing noise in every other check. Harness evidence is
+    # excluded for the same reason — see EVIDENCE_GLOBS.
+    skip = session_paths | evidence_paths
+    docs = [p for p in collect(root, INCLUDE_GLOBS) if p.resolve() not in skip]
 
     texts, records = {}, []
     for path in docs:
@@ -461,6 +491,9 @@ def audit(root: Path, args) -> dict:
     # -- session logs ----------------------------------------------------
     sess = session_stats(sessions)
 
+    # -- harness evidence ------------------------------------------------
+    evidence_found = evidence_stats(root, evidence)
+
     # -- curation state --------------------------------------------------
     state = read_curation_state(root)
 
@@ -476,6 +509,7 @@ def audit(root: Path, args) -> dict:
         "stale": sorted(stale, key=lambda s: -s["age_days"]),
         "duplicates": duplicates,
         "sessions": sess,
+        "evidence": evidence_found,
         "curation_state": state,
     }
 
@@ -582,7 +616,7 @@ def report(result: dict, args) -> str:
         if result.get("mode") == "pre-init":
             out.append("No session log expected before `session-context-init` runs.")
         else:
-            out.append("No session log found. Expected `docs/handoff/SESSION-LOG.md` "
+            out.append("No session log found. Expected `docs/handoff/SESSION_LOG.md` "
                        "or `docs/handoff/sessions/`.")
     else:
         out.append(f"{s['files']} file(s), {s['entries']} session entries, "
@@ -618,6 +652,36 @@ def report(result: dict, args) -> str:
                        f"{len(recent)} session entries "
                        f"({', '.join(map(str, recent))}) after "
                        "the full-log tag extraction.")
+    out.append("")
+
+    ev = result.get("evidence") or {}
+    out += ["## 7. Harness evidence (harvest source)", ""]
+    if not ev:
+        out.append("No `.omo/` planning or notepad artefacts found.")
+    else:
+        labels = {"plans": "Plans", "notepads": "Notepads"}
+        for kind in ("plans", "notepads"):
+            items = ev.get(kind)
+            if not items:
+                continue
+            total = sum(item["tokens"] for item in items)
+            out.append(f"**{labels[kind]}** - {len(items)} file(s), ~{total} tokens:")
+            for item in items[:12]:
+                out.append(f"- `{item['path']}` (~{item['tokens']} tokens)")
+            if len(items) > 12:
+                out.append(f"- ... and {len(items) - 12} more")
+            out.append("")
+        out.append("Read these during the harvest. They are evidence, not curated "
+                   "docs: never audited for reachability or staleness, and never "
+                   "edited by curation. Notepad entries are already sorted by kind "
+                   "(learnings / decisions / issues / problems), so they are a "
+                   "higher-quality candidate source than session-log tags.")
+        if result.get("mode") == "pre-init":
+            out.append("")
+            out.append("In pre-init mode `.omo/plans/` is the primary evidence for "
+                       "the initial plan. Cite it by path; do not copy it into root "
+                       "`plan.md` wholesale - the plan file is a point-in-time "
+                       "artefact, while root `plan.md` is the living plan.")
     out.append("")
     return "\n".join(out)
 

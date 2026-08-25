@@ -15,7 +15,7 @@ Once a fact passes the promotion test, it needs exactly one home.
 | How to run something | `README.md` | L2 | Conditional pointer |
 | Milestones and completion status | root `plan.md` | L1 | Always-read pointer |
 | Current position, blockers, next action | `HANDOFF.md` | L1 | Always-read pointer |
-| Raw session narrative | `docs/handoff/SESSION-LOG.md` or `docs/handoff/sessions/NNN-*.md` | L3 | None — grep only |
+| Raw session narrative | `docs/handoff/SESSION_LOG.md` or `docs/handoff/sessions/NNN-*.md` | L3 | None — grep only |
 
 Invariants are the only category that gets content copied into AGENTS.md, because a rule
 the agent never reads is a rule that doesn't exist. Keep those lines to one sentence each,

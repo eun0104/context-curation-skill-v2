@@ -13,7 +13,7 @@ The project keeps two startup files at the root and all handoff-owned state unde
 └── docs/handoff/
     ├── handoff-spec.md
     ├── HANDOFF.md
-    ├── SESSION-LOG.md
+    ├── SESSION_LOG.md
     ├── DECISIONS.md
     └── .curation-state.json
 ```

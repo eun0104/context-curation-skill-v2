@@ -47,11 +47,11 @@ class InventoryTests(unittest.TestCase):
 
         self.assertEqual(("plan.md", "docs/handoff/HANDOFF.md"),
                          inventory.REQUIRED_L1_PATHS)
-        self.assertIn("docs/handoff/SESSION-LOG.md", inventory.SESSION_GLOBS)
+        self.assertIn("docs/handoff/SESSION_LOG.md", inventory.SESSION_GLOBS)
         self.assertNotIn("docs/handoff/session-log.md", inventory.SESSION_GLOBS)
         self.assertIn("`plan.md`", spec_text)
         self.assertIn("`docs/handoff/HANDOFF.md`", spec_text)
-        self.assertIn("`docs/handoff/SESSION-LOG.md`", spec_text)
+        self.assertIn("`docs/handoff/SESSION_LOG.md`", spec_text)
         self.assertIn("`docs/handoff/DECISIONS.md`", spec_text)
 
     def test_noncanonical_casing_is_not_accepted_as_the_runtime_contract(self):
@@ -134,7 +134,7 @@ class InventoryTests(unittest.TestCase):
             write(root, "plan.md", "# Plan\n")
             write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
             headings = "\n".join(f"## Session {number}" for number in (1, 3, 7, 9, 10, 12))
-            write(root, "docs/handoff/SESSION-LOG.md", headings)
+            write(root, "docs/handoff/SESSION_LOG.md", headings)
 
             result = inventory.audit(root, args())
             output = inventory.report(result, args())
@@ -281,6 +281,61 @@ class InventoryTests(unittest.TestCase):
             self.assertIn("do not continue with curation", output)
             self.assertEqual("pre-init", forced["mode"])
             self.assertIn("explicit", forced["mode_reason"])
+
+    def test_harness_evidence_is_collected_but_never_audited(self):
+        # oh-my-openagent writes the plan and its notepads under .omo/. Those are
+        # harvest evidence: the agent must be told where they are, but auditing
+        # them would report an orphan on every run forever, because AGENTS.md is
+        # not supposed to point at another tool's working state.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "AGENTS.md", "[plan](plan.md)\n[handoff](docs/handoff/HANDOFF.md)\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
+            write(root, ".omo/plans/data-pipeline.md", "# Plan\n\nBuild the collector.\n")
+            write(root, ".omo/notepads/data-pipeline/learnings.md", "# Learnings\n- Signatures expire.\n")
+            write(root, ".omo/notepads/data-pipeline/decisions.md", "# Decisions\n- CSV over parquet.\n")
+
+            result = inventory.audit(root, args())
+            audited = {record["path"] for record in result["docs"]}
+            evidence = result["evidence"]
+
+            self.assertEqual([], result["orphans"])
+            self.assertEqual([], result["broken_links"])
+            self.assertFalse({p for p in audited if p.startswith(".omo/plans")})
+            self.assertFalse({p for p in audited if p.startswith(".omo/notepads")})
+            self.assertEqual([".omo/plans/data-pipeline.md"],
+                             [item["path"] for item in evidence["plans"]])
+            self.assertEqual([".omo/notepads/data-pipeline/decisions.md",
+                              ".omo/notepads/data-pipeline/learnings.md"],
+                             [item["path"] for item in evidence["notepads"]])
+            self.assertIn("## 7. Harness evidence", inventory.report(result, args()))
+
+    def test_pre_init_report_points_at_the_omo_plan_as_primary_evidence(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, ".omo/plans/data-pipeline.md", "# Plan\n\nBuild the collector.\n")
+
+            result = inventory.audit(root, args())
+            output = inventory.report(result, args())
+
+            self.assertEqual("pre-init", result["mode"])
+            self.assertIn(".omo/plans/data-pipeline.md", output)
+            self.assertIn("primary evidence", output)
+
+    def test_projects_without_the_omo_harness_are_unaffected(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "AGENTS.md", "[plan](plan.md)\n[handoff](docs/handoff/HANDOFF.md)\n")
+            write(root, "plan.md", "# Plan\n")
+            write(root, "docs/handoff/HANDOFF.md", "# Handoff\n")
+
+            result = inventory.audit(root, args())
+
+            self.assertEqual({}, result["evidence"])
+            self.assertEqual([], result["orphans"])
+            self.assertIn("No `.omo/` planning or notepad artefacts found.",
+                          inventory.report(result, args()))
 
     def test_report_survives_a_non_utf8_stdout_encoding(self):
         # An agent harness always captures stdout through a pipe, so Python

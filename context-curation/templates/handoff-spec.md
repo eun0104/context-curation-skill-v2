@@ -22,7 +22,7 @@ field, and cadence contract below; they do not need access to the curation skill
 | `AGENTS.md` | init | Created at the project root; routing table only. |
 | `plan.md` | init / on-event | Created at the project root; updated when plan state changes. |
 | `docs/handoff/HANDOFF.md` | per-session | Rewritten fully. Fields below. |
-| `docs/handoff/SESSION-LOG.md` | per-session | Appended. Entry format below. |
+| `docs/handoff/SESSION_LOG.md` | per-session | Appended. Entry format below. |
 | `docs/handoff/DECISIONS.md` | on-event | Only when a real choice was made between alternatives |
 | `docs/reference/parameters.md` | on-event | When a fitted value is accepted as settled |
 | `docs/domain/gotchas.md` | on-event | When an external system behaved unexpectedly |
@@ -92,7 +92,7 @@ indistinguishable from a forgotten one.
 Fields are a budget. When adding one, name the one it replaces. Fifteen fields at the end of a
 long session produce fifteen shallow answers.
 
-## SESSION-LOG.md entry format
+## SESSION_LOG.md entry format
 
 ```markdown
 ## Session NNN — YYYY-MM-DD

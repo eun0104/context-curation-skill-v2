@@ -32,7 +32,7 @@ class SessionContractBlockTests(unittest.TestCase):
         self.assertIn("skill `context-curation`", spec)
         self.assertIn("L0 budget: 2000 tokens", spec)
         self.assertIn("`docs/handoff/HANDOFF.md`", spec)
-        self.assertIn("`docs/handoff/SESSION-LOG.md`", spec)
+        self.assertIn("`docs/handoff/SESSION_LOG.md`", spec)
         self.assertIn("`docs/handoff/DECISIONS.md`", spec)
 
     def test_contracts_require_prompt_only_git_checkpoints(self):

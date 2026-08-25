@@ -80,7 +80,7 @@ Claude 계열은 이게 꽤 안정적인데, 오픈웨이트 모델은 편차가
 └── docs/handoff/
     ├── handoff-spec.md               ← context-curation 이 승인 후 관리
     ├── HANDOFF.md                    ← session-handoff 가 매 세션 갱신
-    ├── SESSION-LOG.md                ← session-handoff 가 append
+    ├── SESSION_LOG.md                ← session-handoff 가 append
     ├── DECISIONS.md                  ← session-handoff 가 on-event append
     └── .curation-state.json          ← context-curation 이 관리
 ```

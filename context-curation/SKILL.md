@@ -24,7 +24,7 @@ Three skills manage the project's memory. Keep the division sharp:
 | Skill | Runs | Owns |
 |---|---|---|
 | `session-context-init` | Session 1, after pre-init curation | Creates root `AGENTS.md` and `plan.md`, then initializes files under `docs/handoff/` from the project spec |
-| `session-handoff` | Every session end | Appends to `docs/handoff/SESSION-LOG.md`, rewrites `docs/handoff/HANDOFF.md`, and appends on-event records under `docs/handoff/` |
+| `session-handoff` | Every session end | Appends to `docs/handoff/SESSION_LOG.md`, rewrites `docs/handoff/HANDOFF.md`, and appends on-event records under `docs/handoff/` |
 | **`context-curation`** | Once before init, then every ~5 sessions | **The doc layer and the project memory contract consumed by both session skills** |
 
 Handoff answers *where did we stop*. This skill answers *what should stop being session state
@@ -48,7 +48,7 @@ Classify by **how often a doc is read**, not by how important it feels.
 | **L0** | `AGENTS.md` | Every session, unconditionally | **2,000 tokens hard cap** |
 | **L1** | `docs/handoff/HANDOFF.md`, root `plan.md` | Every session start, via pointer | ~1,500 tokens each |
 | **L2** | `docs/handoff/DECISIONS.md`, `docs/architecture.md`, `docs/domain/*.md`, `docs/rules/*.md`, `docs/reference/*.md` | **Conditionally**, only when the task matches | Unbounded, pointer mandatory |
-| **L3** | `docs/handoff/SESSION-LOG.md`, `docs/archive/` | Never read whole; grep only | Append-only |
+| **L3** | `docs/handoff/SESSION_LOG.md`, `docs/archive/` | Never read whole; grep only | Append-only |
 
 Two failure modes this prevents: **L0 bloat**, where every session gets more expensive and the
 important lines get buried; and **L2 orphans**, where a doc is correct but nothing points to it,
@@ -161,7 +161,9 @@ For how to fix each finding, read `references/audit-checks.md` now.
 
 **In pre-init mode, skip session harvesting.** Extract candidate structure only from the initial
 plan, current conversation, existing repository evidence, and any explicitly supplied project
-constraints. A first-pass contract is a prior to test, not proof that the project already needs a
+constraints. When the inventory's section 7 lists `.omo/plans/`, that plan is the primary evidence
+— read it and cite it by path. Do not copy it into root `plan.md` wholesale: the plan file is a
+point-in-time planning artefact, while root `plan.md` is the living plan that milestones update. A first-pass contract is a prior to test, not proof that the project already needs a
 large document set. Continue at Step 4 and propose the root startup files, the minimum
 `docs/handoff/` set, and the shared spec consumed by both local session skills. The spec must
 include the `AGENTS.md initialization` and `Git checkpoint policy` sections from
@@ -177,7 +179,7 @@ left to think.
 **First, extract across the entire log — always, regardless of size:**
 
 ```bash
-grep -n "\[candidate\]\|\[gotcha\]\|\[decision\]" docs/handoff/SESSION-LOG.md
+grep -n "\[candidate\]\|\[gotcha\]\|\[decision\]" docs/handoff/SESSION_LOG.md
 ```
 
 This is complete recurrence coverage for a fraction of the cost, and it is why the handoff spec
@@ -194,16 +196,22 @@ window is consumed:
 With a single append-only log, seek to a session by heading:
 
 ```bash
-grep -n "^#\{1,4\} *[Ss]ession *0*7" docs/handoff/SESSION-LOG.md
-sed -n '<line>,$p' docs/handoff/SESSION-LOG.md
+grep -n "^#\{1,4\} *[Ss]ession *0*7" docs/handoff/SESSION_LOG.md
+sed -n '<line>,$p' docs/handoff/SESSION_LOG.md
 ```
 
 If the whole log is small — the audit report gives its token count — reading it entirely is
 simplest and best. The point is to decide that from the measured size rather than by starting to
 read and finding out.
 
+**Then read whatever the inventory's section 7 lists.** Under the oh-my-openagent harness, notepad
+entries arrive already sorted by kind — `learnings.md`, `decisions.md`, `issues.md`,
+`problems.md` — which makes them a higher-quality candidate source than session-log tags, and one
+that survives a project where tagging never took hold. They are evidence only: never audit them
+for reachability or staleness, and never edit them. Cite them by path like any other source.
+
 State what was read. If the tag extraction returns nothing, tagging is not happening; say so, note
-it for the handoff spec, and fall back to reading the unharvested range.
+it for the handoff spec, and fall back to reading the unharvested range and section 7.
 
 Extract candidates: things learned, decided, discovered broken, or repeatedly re-explained.
 Then scan `docs/handoff/HANDOFF.md` — items that have survived several handoffs unchanged are usually

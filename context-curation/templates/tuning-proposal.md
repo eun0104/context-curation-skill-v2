@@ -27,7 +27,7 @@ runs `scripts/session_contract_blocks.py --root . --apply` against `.opencode/sk
 ## B. Promotions
 
 ### B1. <the fact, in one sentence>
-- **Source:** `docs/handoff/SESSION-LOG.md`, Session 007, line 42 <or file path / commit>
+- **Source:** `docs/handoff/SESSION_LOG.md`, Session 007, line 42 <or file path / commit>
 - **Test:** recurrence ✓ · loss ✓ · stability ✓ · non-derivable ✗ → **3/4, promote**
 - **Scientific traceability, when applicable:** <evidence state> · <source or derivation> →
   <canonical equation/claim ID> → <implementation> → <verification evidence>; use `[TBD]` for gaps

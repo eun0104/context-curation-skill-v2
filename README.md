@@ -27,7 +27,7 @@ Documents are classified by **read frequency**, not importance.
 | L0 | `AGENTS.md` | Every session | 2,000-token hard cap |
 | L1 | root `plan.md`, `docs/handoff/HANDOFF.md` | At session start | ~1,500 each |
 | L2 | `decisions` · `architecture` · `domain` · `rules` · `reference` | On demand | Unlimited, but must be linked |
-| L3 | `docs/handoff/SESSION-LOG.md`, `docs/archive/` | Never read wholesale; searched only | Append-only |
+| L3 | `docs/handoff/SESSION_LOG.md`, `docs/archive/` | Never read wholesale; searched only | Append-only |
 
 The L0 cap is not a spending limit. It is a **shape constraint**. If seven non-negotiable rules
 compete for attention with paragraphs of ordinary facts, they stop reading like rules.
@@ -269,7 +269,8 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All twenty-six current regression tests pass, covering non-UTF-8 stdout encodings, scientific
+All twenty-nine current regression tests pass, covering harness evidence collection, non-UTF-8
+stdout encodings, scientific
 pre-init profile and traceability contracts, strict canonical session-file casing, automatic
 lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing, nested handoff
 paths, bootstrap scope, reachability, freshness, curation-state discovery, plural project skill

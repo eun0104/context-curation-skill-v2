@@ -25,7 +25,7 @@
 | L0 | `AGENTS.md` | 매 세션 무조건 | 2,000 토큰 하드캡 |
 | L1 | 루트 `plan.md`, `docs/handoff/HANDOFF.md` | 세션 시작 시 | 각 ~1,500 |
 | L2 | `decisions` · `architecture` · `domain` · `rules` · `reference` | 조건부 | 무제한, 포인터 필수 |
-| L3 | `docs/handoff/SESSION-LOG.md`, `docs/archive/` | 통째로 안 읽음, grep만 | append-only |
+| L3 | `docs/handoff/SESSION_LOG.md`, `docs/archive/` | 통째로 안 읽음, grep만 | append-only |
 
 L0 상한은 지출 한도가 아니라 **형태 강제 장치**입니다. 반드시 지켜야 할 불변 규칙 일곱 줄이
 단지 사실일 뿐인 문단들과 같은 지면에서 경쟁하면, 규칙이 규칙으로 읽히기를 그칩니다.
@@ -254,7 +254,7 @@ python -m unittest discover -s tests -v
 bootstrap 범위, 도달성, freshness, curation state 탐색, 복수형 프로젝트 스킬 경로, 승인된
 contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드,
 과학 profile의 pre-init 적용과 추적성 계약, canonical 파일명 대소문자 검증, 비 UTF-8 stdout
-인코딩 환경, 멱등성을 포함한 회귀 테스트 26개가 통과합니다.
+인코딩 환경, 하네스 증거원 수집, 멱등성을 포함한 회귀 테스트 29개가 통과합니다.
 
 ## 라이선스
 
