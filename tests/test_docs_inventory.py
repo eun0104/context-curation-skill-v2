@@ -282,6 +282,34 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual("pre-init", forced["mode"])
             self.assertIn("explicit", forced["mode_reason"])
 
+    def test_duplication_result_does_not_claim_more_than_it_checked(self):
+        # Five-word shingles catch copies, not restatements. A clean run that
+        # reads as "no duplication" is the same false confidence this skill
+        # warns about for unreachable docs, so the limit is stated either way.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write(root, "AGENTS.md", "[plan](plan.md)\n")
+            write(root, "plan.md", "# Plan\n")
+
+            output = inventory.report(inventory.audit(root, args()), args())
+
+            self.assertIn("No copied passages above threshold.", output)
+            self.assertNotIn("No near-duplicate passages", output)
+            self.assertIn("is not detected", output)
+            self.assertIn("never as \"no duplication\"", output)
+
+    def test_promotions_require_a_pasted_evidence_block(self):
+        skill_dir = SCRIPT.parents[1]
+        skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+        proposal = (skill_dir / "templates" / "tuning-proposal.md").read_text(encoding="utf-8")
+
+        self.assertIn("**Evidence:**", proposal)
+        self.assertIn("not promotable", proposal)
+        self.assertIn("citation verification", proposal)
+        self.assertIn("verify every citation in section B", skill)
+        self.assertIn("re-run the command", skill)
+        self.assertIn("Evidence` block", skill)
+
     def test_harness_evidence_is_collected_but_never_audited(self):
         # oh-my-openagent writes the plan and its notepads under .omo/. Those are
         # harvest evidence: the agent must be told where they are, but auditing

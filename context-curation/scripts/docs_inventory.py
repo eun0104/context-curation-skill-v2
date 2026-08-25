@@ -607,7 +607,15 @@ def report(result: dict, args) -> str:
             out.append(f"- {d['a']} ~ {d['b']} (similarity {d['similarity']})")
             out.append(f"  > {d['excerpt']}...")
     else:
-        out.append("No near-duplicate passages above threshold.")
+        out.append("No copied passages above threshold.")
+    out.append("")
+    out.append("This check compares five-word shingles, so it finds copy-paste and lightly "
+               "edited copies only. **Restating the same fact in different words scores near "
+               "zero and is not detected** - and that is the usual shape of a `one fact, one "
+               "home` violation, especially in Korean, where particles and endings differ. "
+               "Treat a clean result as \"no copies found\", never as \"no duplication\": "
+               "checking whether two docs assert the same thing is a reading task, not a "
+               "measurement this script can make.")
     out.append("")
 
     s = result["sessions"]

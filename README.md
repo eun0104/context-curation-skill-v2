@@ -269,7 +269,8 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All twenty-nine current regression tests pass, covering harness evidence collection, non-UTF-8
+All thirty-one current regression tests pass, covering citation-evidence and duplication-scope
+contracts, harness evidence collection, non-UTF-8
 stdout encodings, scientific
 pre-init profile and traceability contracts, strict canonical session-file casing, automatic
 lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing, nested handoff

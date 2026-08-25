@@ -59,7 +59,7 @@ so it is never read. An unreachable doc is worse than no doc — it creates fals
 1. **Never delete a persistent document.** Move it to `docs/archive/YYYY-MM-DD-<name>.md` with a note on what superseded it. The temporary `docs/_tuning-proposal.md` is the sole exception: remove it after approved changes are fully applied.
 2. **One fact, one home.** State a fact in exactly one place; point at it everywhere else. Copying content into AGENTS.md is the most common cause of drift, because the copy never gets updated.
 3. **Propose, then stop.** See Step 5. Doc restructuring is hard to review after the fact.
-4. **Cite the source of every promoted fact** — session number, file path, or commit. Never promote something inferred rather than observed. A wrong fact in the persistent layer poisons every future session.
+4. **Cite the source of every promoted fact, and show the command output that proves it** — session number, file path, or commit, plus the `grep` line it came from, pasted verbatim. Never promote something inferred rather than observed. A wrong fact in the persistent layer poisons every future session, and a citation nobody can check is indistinguishable from one that was invented.
 5. **Max 2 new durable L2 knowledge files per run.** The proposal, curation state, and handoff control spec do not count. If bootstrap needs more than two L2 files, split it across runs or request explicit approval for the larger document set.
 6. **Follow the project's existing conventions** — language, heading style, numbering. If the docs are Korean, write Korean.
 
@@ -296,12 +296,29 @@ spec proposal item, not as permission to initialize or commit.
 
 Then **re-read the proposal as an adversary before showing it.** Re-apply the promotion test to
 every item in section B and cut anything that no longer scores 2. Check that no item restates
-content that already exists elsewhere in the doc set, and that every claimed source citation
-actually says what the item claims. This pass is cheap and it protects the one thing that does
-not scale: a proposal with twelve items, four of them weak, gets a worse review than one with
-eight solid items, because the reviewer's scepticism is spent on the wrong ones.
+content that already exists elsewhere in the doc set. This pass is cheap and it protects the one
+thing that does not scale: a proposal with twelve items, four of them weak, gets a worse review
+than one with eight solid items, because the reviewer's scepticism is spent on the wrong ones.
 
-State how many items were cut in this pass.
+**Then verify every citation in section B by re-reading it, and paste the output.** For each
+promoted fact, run the command that retrieves its cited line and copy the result into the item's
+`Evidence` field verbatim:
+
+```bash
+grep -n "<distinctive phrase from the fact>" docs/handoff/SESSION_LOG.md
+sed -n '<line>p' <cited file>          # for a non-log source
+```
+
+Do not paraphrase the output, and do not write the field from memory — re-run the command even
+when you are confident, because confidence is exactly what a fabricated citation also feels like.
+If the command returns nothing, or returns a line that does not support the claim, the item is
+not promotable: cut it, or demote it to an open question. Say which items this removed.
+
+This is the one check the user cannot perform by reading the proposal alone. Everything else in
+Pass A is visible in the diff at approval time; a citation is not, so a wrong one survives review
+and lands in the permanent layer, where rule 4 says it poisons every future session.
+
+State how many items were cut by each of the two passes, separately.
 
 This is the end of Pass A. Unless the project is small and the window still has clear headroom,
 end the session here — Pass B will reread the proposal and start clean.
@@ -348,6 +365,7 @@ Before reporting done, verify and state each:
 - [ ] Every new doc has an inbound pointer with a real trigger condition
 - [ ] No content was copied rather than pointed at
 - [ ] No persistent document was deleted — only archived; the temporary proposal was removed
+- [ ] Every applied promotion carried a verified `Evidence` block, not a bare citation
 - [ ] `docs/handoff/.curation-state.json` updated
 - [ ] Net change to per-session work stated explicitly
 - [ ] Git HEAD and pre-existing staged work were preserved
