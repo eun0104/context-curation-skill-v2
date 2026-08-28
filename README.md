@@ -183,6 +183,7 @@ context-curation/
 ├── command/tune-docs.md           # Slash command for explicit invocation
 ├── scripts/docs_inventory.py      # Structural audit; standard library only, no network
 ├── scripts/session_contract_blocks.py  # Check/install project-local contract blocks
+├── scripts/verify_proposal.py     # Re-read every cited line before promotion
 ├── references/
 │   ├── promotion-test.md          # Four promotion criteria and examples
 │   ├── routing-table.md           # Destination selection and document formats
@@ -197,6 +198,7 @@ context-curation/
 tests/
 ├── test_docs_inventory.py         # Standard-library regression tests
 ├── test_session_contract_blocks.py  # Contract-block regression tests
+├── test_verify_proposal.py        # Citation-verification regression tests
 └── fixtures/bootstrap-project/    # Anonymous forward-test project
 ```
 
@@ -243,6 +245,9 @@ python context-curation/scripts/docs_inventory.py --root /path/to/project
 # Check fixed project-local session skill contract blocks (read-only by default)
 # python context-curation/scripts/session_contract_blocks.py --root /path/to/project
 
+# Verify that every promotion in a written proposal cites a line that exists
+# python context-curation/scripts/verify_proposal.py --root /path/to/project
+
 # From a global installation
 # python ~/.config/opencode/skills/context-curation/scripts/docs_inventory.py --root /path/to/project
 ```
@@ -269,8 +274,8 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All thirty-one current regression tests pass, covering citation-evidence and duplication-scope
-contracts, harness evidence collection, non-UTF-8
+All forty-one current regression tests pass, covering mechanical citation verification,
+duplication-scope contracts, harness evidence collection, non-UTF-8
 stdout encodings, scientific
 pre-init profile and traceability contracts, strict canonical session-file casing, automatic
 lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing, nested handoff

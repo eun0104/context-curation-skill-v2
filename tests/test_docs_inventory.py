@@ -298,17 +298,21 @@ class InventoryTests(unittest.TestCase):
             self.assertIn("is not detected", output)
             self.assertIn("never as \"no duplication\"", output)
 
-    def test_promotions_require_a_pasted_evidence_block(self):
+    def test_citation_checking_is_wired_to_the_script_not_left_to_prose(self):
+        # The behaviour itself is covered by test_verify_proposal. What matters
+        # here is that the workflow actually reaches for the script: an
+        # instruction to check citations by hand is the honour system this
+        # guardrail exists to replace.
         skill_dir = SCRIPT.parents[1]
         skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
         proposal = (skill_dir / "templates" / "tuning-proposal.md").read_text(encoding="utf-8")
 
+        self.assertTrue((skill_dir / "scripts" / "verify_proposal.py").is_file())
         self.assertIn("**Evidence:**", proposal)
         self.assertIn("not promotable", proposal)
-        self.assertIn("citation verification", proposal)
-        self.assertIn("verify every citation in section B", skill)
-        self.assertIn("re-run the command", skill)
-        self.assertIn("Evidence` block", skill)
+        self.assertIn("verify_proposal.py", proposal)
+        self.assertIn("scripts/verify_proposal.py --root .", skill)
+        self.assertIn("verify_proposal.py` exited clean", skill)
 
     def test_harness_evidence_is_collected_but_never_audited(self):
         # oh-my-openagent writes the plan and its notepads under .omo/. Those are

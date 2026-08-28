@@ -290,23 +290,19 @@ content that already exists elsewhere in the doc set. This pass is cheap and it 
 thing that does not scale: a proposal with twelve items, four of them weak, gets a worse review
 than one with eight solid items, because the reviewer's scepticism is spent on the wrong ones.
 
-**Then verify every citation in section B by re-reading it, and paste the output.** For each
-promoted fact, run the command that retrieves its cited line and copy the result into the item's
-`Evidence` field verbatim:
+**Then verify every citation mechanically.** Paste each promoted fact's retrieval output into its
+`Evidence` field verbatim — never from memory, because confidence is exactly what a fabricated
+citation also feels like — then run:
 
 ```bash
-grep -n "<distinctive phrase from the fact>" docs/handoff/SESSION_LOG.md
-sed -n '<line>p' <cited file>          # for a non-log source
+python <skill-dir>/scripts/verify_proposal.py --root .
 ```
 
-Do not paraphrase the output, and do not write the field from memory — re-run the command even
-when you are confident, because confidence is exactly what a fabricated citation also feels like.
-If the command returns nothing, or returns a line that does not support the claim, the item is
-not promotable: cut it, or demote it to an open question. Say which items this removed.
-
-This is the one check the user cannot perform by reading the proposal alone. Everything else in
-Pass A is visible in the diff at approval time; a citation is not, so a wrong one survives review
-and lands in the permanent layer, where rule 4 says it poisons every future session.
+It re-reads each cited file and names every item whose evidence is missing, unreproducible, or
+pointing at the wrong line. Cut what it does not verify, or demote it to an open question, and
+re-run until it exits clean. Never wave a failure through: a citation is the one part of the
+proposal the reviewer cannot check by reading it, so a wrong one survives review and lands in the
+permanent layer, where rule 4 says it poisons every future session.
 
 State how many items were cut by each of the two passes, separately.
 
@@ -355,7 +351,7 @@ Before reporting done, verify and state each:
 - [ ] Every new doc has an inbound pointer with a real trigger condition
 - [ ] No content was copied rather than pointed at
 - [ ] No persistent document was deleted — only archived; the temporary proposal was removed
-- [ ] Every applied promotion carried a verified `Evidence` block, not a bare citation
+- [ ] `verify_proposal.py` exited clean before anything in section B was applied
 - [ ] `docs/handoff/.curation-state.json` updated
 - [ ] Net change to per-session work stated explicitly
 - [ ] Git HEAD and pre-existing staged work were preserved
@@ -479,4 +475,5 @@ fact belongs in the persistent layer and is not there.
 | `templates/*.md` | Step 6 — creating a new persistent doc |
 | `scripts/docs_inventory.py` | Step 1 — run it, no need to read it |
 | `scripts/session_contract_blocks.py` | Steps 1, 6, and 7 — check, apply after approval, verify |
+| `scripts/verify_proposal.py` | Steps 5 and 7 — run it, no need to read it |
 | `integration/` | First-time setup only |

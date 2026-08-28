@@ -30,7 +30,8 @@ runs `scripts/session_contract_blocks.py --root . --apply` against `.opencode/sk
 ### B1. <the fact, in one sentence>
 - **Source:** `docs/handoff/SESSION_LOG.md`, Session 007, line 42 <or file path / commit>
 - **Evidence:** output of the command that retrieves the cited line, pasted verbatim — never
-  retyped from memory. An item without this field is not promotable.
+  retyped from memory. `scripts/verify_proposal.py` re-reads the cited file and checks this
+  block; an item it does not verify is not promotable.
   ```text
   $ grep -n "signature expires" docs/handoff/SESSION_LOG.md
   42:- [gotcha] The vendor signature expires 30s after issue; retries must re-sign.

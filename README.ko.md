@@ -153,6 +153,7 @@ context-curation/
 ├── command/tune-docs.md           # 명시 호출용 슬래시 커맨드
 ├── scripts/docs_inventory.py      # 구조 감사 (표준 라이브러리만, 네트워크 없음)
 ├── scripts/session_contract_blocks.py  # 프로젝트 로컬 contract block 점검/승인 적용
+├── scripts/verify_proposal.py     # 승격 전 인용 줄을 원본에서 재확인
 ├── references/
 │   ├── promotion-test.md          # 승격 4기준과 예시
 │   ├── routing-table.md           # 목적지 결정과 문서 포맷
@@ -167,6 +168,7 @@ context-curation/
 tests/
 ├── test_docs_inventory.py         # 표준 라이브러리 회귀 테스트
 ├── test_session_contract_blocks.py  # contract block 회귀 테스트
+├── test_verify_proposal.py        # 인용 검증 회귀 테스트
 └── fixtures/bootstrap-project/    # 익명 forward-test 프로젝트
 ```
 
@@ -254,8 +256,8 @@ python -m unittest discover -s tests -v
 bootstrap 범위, 도달성, freshness, curation state 탐색, 복수형 프로젝트 스킬 경로, 승인된
 contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드,
 과학 profile의 pre-init 적용과 추적성 계약, canonical 파일명 대소문자 검증, 비 UTF-8 stdout
-인코딩 환경, 하네스 증거원 수집, 인용 증거·중복 탐지 범위 계약, 멱등성을 포함한
-회귀 테스트 31개가 통과합니다.
+인코딩 환경, 하네스 증거원 수집, 기계적 인용 검증, 중복 탐지 범위 계약, 멱등성을 포함한
+회귀 테스트 41개가 통과합니다.
 
 ## 라이선스
 
