@@ -163,46 +163,36 @@ For how to fix each finding, read `references/audit-checks.md` now.
 plan, current conversation, existing repository evidence, and any explicitly supplied project
 constraints. When the inventory's section 7 lists `.omo/plans/`, that plan is the primary evidence
 — read it and cite it by path. Do not copy it into root `plan.md` wholesale: the plan file is a
-point-in-time planning artefact, while root `plan.md` is the living plan that milestones update. A first-pass contract is a prior to test, not proof that the project already needs a
-large document set. Continue at Step 4 and propose the root startup files, the minimum
+point-in-time planning artefact, while root `plan.md` is the living plan that milestones update.
+A first-pass contract is a prior to test, not proof that the project already needs a large
+document set. Continue at Step 4 and propose the root startup files, the minimum
 `docs/handoff/` set, and the shared spec consumed by both local session skills. The spec must
 include the `AGENTS.md initialization` and `Git checkpoint policy` sections from
 `templates/handoff-spec.md`; do not require the user to locate or apply a separate snippet.
 
 For bootstrap and tune modes, continue below.
 
-Step 3's recurrence criterion asks whether something has appeared across *multiple* sessions, so
-the harvest needs to see the whole history. But full-history **coverage** does not require
-full-text **reading**, and conflating the two is how a curation run arrives at Step 5 with no room
-left to think.
-
-**First, extract across the entire log — always, regardless of size:**
+Step 3's recurrence criterion asks whether something appeared across *multiple* sessions, so the
+harvest must cover the whole history. Start with the tag extraction, which gives that coverage
+cheaply:
 
 ```bash
 grep -n "\[candidate\]\|\[gotcha\]\|\[decision\]" docs/handoff/SESSION_LOG.md
 ```
 
-This is complete recurrence coverage for a fraction of the cost, and it is why the handoff spec
-asks for those tags. A fact surfacing in sessions 2, 9, and 14 shows up here; an incremental read
-would have missed it entirely.
+A fact surfacing in sessions 2, 9, and 14 shows up here; an incremental read would have missed it
+entirely. This is why the handoff spec asks for those tags.
 
-**Then read full text selectively**, in this priority order, stopping when roughly half the
-window is consumed:
-
-1. The sessions surrounding each tag hit — enough context to judge the candidate
-2. The unharvested range since `harvested_through_session` in `docs/handoff/.curation-state.json`. If no usable checkpoint exists, read the latest five session entries.
-3. Earlier sessions, only if room remains and the tag extraction looked thin
-
-With a single append-only log, seek to a session by heading:
+**Then follow the harvest verdict in section 6 of the inventory report.** It has already measured
+the log against the context window and says which of three things to do. Normally it says to read
+the whole log — do that; it stays the normal case for a long time, and reading everything is both
+simplest and best. Only when the report says the log is too large do you need to seek by heading
+and read selectively around the tag hits and the unharvested range:
 
 ```bash
 grep -n "^#\{1,4\} *[Ss]ession *0*7" docs/handoff/SESSION_LOG.md
 sed -n '<line>,$p' docs/handoff/SESSION_LOG.md
 ```
-
-If the whole log is small — the audit report gives its token count — reading it entirely is
-simplest and best. The point is to decide that from the measured size rather than by starting to
-read and finding out.
 
 **Then read whatever the inventory's section 7 lists.** Under the oh-my-openagent harness, notepad
 entries arrive already sorted by kind — `learnings.md`, `decisions.md`, `issues.md`,
@@ -211,7 +201,7 @@ that survives a project where tagging never took hold. They are evidence only: n
 for reachability or staleness, and never edit them. Cite them by path like any other source.
 
 State what was read. If the tag extraction returns nothing, tagging is not happening; say so, note
-it for the handoff spec, and fall back to reading the unharvested range and section 7.
+it for the handoff spec, and rely on the full-log read and section 7 instead.
 
 Extract candidates: things learned, decided, discovered broken, or repeatedly re-explained.
 Then scan `docs/handoff/HANDOFF.md` — items that have survived several handoffs unchanged are usually
