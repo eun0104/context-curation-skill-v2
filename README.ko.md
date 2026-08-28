@@ -82,7 +82,9 @@ OpenCode 조합이 한 사본을 선택하지 않고 둘 다 노출한다면 모
 않은 사본을 제거합니다. 한 번의 실행은 로드된 한 사본의 스크립트·템플릿·참조 파일만 사용합니다.
 
 `context-curation`의 설치 범위와 관계없이 `session-context-init`과 `session-handoff`는 프로젝트의
-`.opencode/skills/`로 복사합니다. 초기 계획이 선 뒤 `session-context-init`보다 먼저 curation
+`.opencode/skills/`로 복사합니다. 두 스킬의 참조 구현이
+[`reference-skills/`](reference-skills/)에 있습니다. 이미 자체 사본을 운영 중이면 그대로 쓰고,
+차이가 생기면 spec을 기준으로 판단합니다. 초기 계획이 선 뒤 `session-context-init`보다 먼저 curation
 스킬을 명시 호출합니다. 스킬이 lifecycle을 자동 판정하므로 프롬프트에 `pre-init`을 쓸 필요가
 없습니다. 고정된 두 로컬 경로에서 contract instruction block 누락을 감지해 설치를 제안하며,
 첫 승인 실행이 해당 블록과 `docs/handoff/handoff-spec.md`, 상태 파일을 적용합니다.
@@ -165,10 +167,16 @@ context-curation/
 ├── templates/                     # 새 문서 생성용 템플릿
 └── integration/                   # 프로젝트 로컬 init/handoff 연동 블록
 
+reference-skills/                  # curation이 개발·테스트 대상으로 삼는 두 세션 스킬
+├── session-context-init/SKILL.md
+├── session-handoff/SKILL.md
+└── README.md
+
 tests/
 ├── test_docs_inventory.py         # 표준 라이브러리 회귀 테스트
 ├── test_session_contract_blocks.py  # contract block 회귀 테스트
 ├── test_verify_proposal.py        # 인용 검증 회귀 테스트
+├── test_lifecycle_contract.py     # 스킬 간 접합부 테스트
 └── fixtures/bootstrap-project/    # 익명 forward-test 프로젝트
 ```
 
@@ -256,8 +264,8 @@ python -m unittest discover -s tests -v
 bootstrap 범위, 도달성, freshness, curation state 탐색, 복수형 프로젝트 스킬 경로, 승인된
 contract block 삽입, 승인 기반 Git checkpoint 계약, 구형 마커 이관, 구버전 block 업그레이드,
 과학 profile의 pre-init 적용과 추적성 계약, canonical 파일명 대소문자 검증, 비 UTF-8 stdout
-인코딩 환경, 하네스 증거원 수집, 기계적 인용 검증, 중복 탐지 범위 계약, 멱등성을 포함한
-회귀 테스트 41개가 통과합니다.
+인코딩 환경, 하네스 증거원 수집, 기계적 인용 검증, 중복 탐지 범위 계약, 스킬 간 접합부 계약,
+멱등성을 포함한 회귀 테스트 48개가 통과합니다.
 
 ## 라이선스
 

@@ -86,7 +86,9 @@ copies instead of resolving one, remove the unintended copy rather than relying 
 selection. A run uses scripts, templates, and references only from the loaded copy.
 
 Regardless of the curation scope, copy `session-context-init` and `session-handoff` into the
-project's `.opencode/skills/` directory. After the initial project plan is clear, invoke curation
+project's `.opencode/skills/` directory. Reference implementations of both live in
+[`reference-skills/`](reference-skills/); a project that already runs its own copies keeps them,
+and the spec settles any disagreement. After the initial project plan is clear, invoke curation
 before `session-context-init`. The skill detects the lifecycle automatically; no `pre-init` prompt
 argument is required. It proposes missing contract instruction blocks at the two fixed local paths.
 The first approved run installs them and creates `docs/handoff/handoff-spec.md` and
@@ -195,10 +197,16 @@ context-curation/
 ├── templates/                     # Templates for new documents
 └── integration/                   # Project-local init and handoff integration blocks
 
+reference-skills/                  # The two session skills curation is tested against
+├── session-context-init/SKILL.md
+├── session-handoff/SKILL.md
+└── README.md
+
 tests/
 ├── test_docs_inventory.py         # Standard-library regression tests
 ├── test_session_contract_blocks.py  # Contract-block regression tests
 ├── test_verify_proposal.py        # Citation-verification regression tests
+├── test_lifecycle_contract.py     # Cross-skill seam tests
 └── fixtures/bootstrap-project/    # Anonymous forward-test project
 ```
 
@@ -274,8 +282,9 @@ verification dates, first-run harvest scope, Git dates, and working-tree changes
 python -m unittest discover -s tests -v
 ```
 
-All forty-one current regression tests pass, covering mechanical citation verification,
-duplication-scope contracts, harness evidence collection, non-UTF-8
+All forty-eight current regression tests pass, covering cross-skill lifecycle seams,
+mechanical citation verification, duplication-scope contracts, harness evidence collection,
+non-UTF-8
 stdout encodings, scientific
 pre-init profile and traceability contracts, strict canonical session-file casing, automatic
 lifecycle detection, ambiguous startup evidence, AGENTS.md initialization routing, nested handoff
